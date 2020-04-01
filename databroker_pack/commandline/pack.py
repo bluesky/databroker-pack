@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 import argparse
 import functools
+import hashlib
 import logging
+import pathlib
 import sys
 import tempfile
 
 from suitcase.utils import MultiFileManager
 
-from ._utils import ShowVersionAction
+from ._utils import ListCatalogsAction, ShowVersionAction
 from .._pack import export_catalog, export_uids
 
 
-MANIFEST_FILE_NAME = "external_files_manifest.txt"
+MANIFEST_NAME_TEMPLATE = "external_files_manifest_{root_hash}_{root_index}.txt"
 print = functools.partial(print, file=sys.stderr)
 
 
@@ -66,7 +68,7 @@ Copy the external data files into the output directory.
 $ databroker-pack CATALOG --all --copy-external DIRECTORY
 """,
     )
-    parser.register("action", "list_catalogs", _ListCatalogsAction)
+    parser.register("action", "list_catalogs", ListCatalogsAction)
     parser.register("action", "show_version", ShowVersionAction)
     filter_group = parser.add_argument_group(
         description="Which Runs should we pack? Must specify one of these:"
@@ -120,26 +122,22 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         help="Copy relevant external files into the output directory.",
     )
     external_group.add_argument(
-        "--no-manifest",
+        "--fill-external",
+        action="store_true",
+        help="Place external data directly in the documents.",
+    )
+    external_group.add_argument(
+        "--no-manifests",
         action="store_true",
         help=(
             "By default, the locations of all relevant external files on the "
-            f"source machine are written to a text file named {MANIFEST_FILE_NAME}. "
-            "Set this to omit that manifest. Building the manifest "
-            "may require accessing the relevant files (depending on the "
-            "of the file format). If the external files are not needed and "
-            "cannot be accessed, you may invoke this option to export only "
-            "the content of the Documents, skipping the manifest."
+            f"source machine are written to text files. "
+            "Set this to omit those manifests."
         ),
     )
     parser.add_argument(
         "--no-documents", action="store_true", help="Do not pack the Documents.",
     )
-    # TODO Do we want to support this? It would be easy to misuse.
-    # external_group.add_argument(
-    #     "--fill-external-data,"
-    #     action="store_true",
-    #     help="Place external data directly in the documents.")
     parser.add_argument(
         "--strict",
         action="store_true",
@@ -150,6 +148,12 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         ),
     )
     args = parser.parse_args()
+    if args.no_manifests:
+        external = "omit"
+    elif args.fill_external:
+        external = "fill"
+    else:
+        external = None
     import databroker
     import databroker.queries
 
@@ -157,7 +161,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
     manager = MultiFileManager(args.directory)
     # Make a separate manager instance in order to allow appending to the
     # manifest (but not in general).
-    another_manager = MultiFileManager(args.directory, allowed_modes="a")
+    manifest_manager = MultiFileManager(args.directory, allowed_modes="a")
     try:
         if args.query or args.all:
             if args.all:
@@ -183,7 +187,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 results,
                 manager,
                 strict=args.strict,
-                omit_external=args.no_manifest,
+                external=external,
                 dry_run=args.no_documents,
             )
         elif args.uids:
@@ -203,7 +207,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                     uids,
                     manager,
                     strict=args.strict,
-                    omit_external=args.no_manifest,
+                    external=external,
                     dry_run=args.no_documents,
                 )
         else:
@@ -211,13 +215,30 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 "Must specify which Runs to pack, --query ... or "
                 "--uids ... or --all."
             )
-        if not args.no_manifest:
-            with another_manager.open("manifest", MANIFEST_FILE_NAME, "a") as file:
-                # IF we are appending to a nonempty file, ensure we start on a
-                # new line.
-                if file.tell():
-                    file.write("\n")
-                file.write("\n".join(external_files))
+        if not args.no_manifests:
+            for root, files in external_files.items():
+                if not files:
+                    # fast path
+                    continue
+                # This is just a unique ID to give the manifest file for each
+                # root a unique name. It is not a cryptographic hash.
+                root_hash = hashlib.md5(root.encode()).hexdigest()
+                # The is the number of parts of the path that comprise the
+                # root, so that we can reconstruct which part of the paths in
+                # the file are the "root". (This information is available in
+                # other ways, so putting it here is just a convenience.)
+                # We subract one because we do not count '/'.
+                # So the root_index of '/tmp/weoifjew' is 2.
+                root_index = len(pathlib.Path(root).parts - 1)
+                name = MANIFEST_NAME_TEMPLATE.format(
+                    root_hash=root_hash, root_index=root_index
+                )
+                with manifest_manager.open("manifest", name, "a") as file:
+                    # IF we are appending to a nonempty file, ensure we start
+                    # on a new line.
+                    if file.tell():
+                        file.write("\n")
+                    file.write("\n".join(sorted(files)))
         if failures:
             print(f"{len(failures)} Runs failed to pack.")
             with tempfile.NamedTemporaryFile("w", delete=False) as file:
@@ -227,31 +248,4 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             sys.exit(1)
     finally:
         manager.close()
-        another_manager.close()
-
-
-class _ListCatalogsAction(argparse.Action):
-    # a special action that allows the usage --list-catalogs to override
-    # any 'required args' requirements, the same way that --help does
-
-    def __init__(
-        self,
-        option_strings,
-        dest=argparse.SUPPRESS,
-        default=argparse.SUPPRESS,
-        help=None,
-    ):
-        super().__init__(
-            option_strings=option_strings,
-            dest=dest,
-            default=default,
-            nargs=0,
-            help=help,
-        )
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        import databroker
-
-        for name in databroker.catalog:
-            print(name)
-        parser.exit()
+        manifest_manager.close()
