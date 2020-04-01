@@ -1,7 +1,9 @@
 import suitcase.msgpack
 from tqdm import tqdm
+import logging
 
 __all__ = ("export_uids", "export_catalog", "export_run")
+logger = logging.getLogger(__name__)
 
 
 # Write through tqdm to avoid overlapping with bars.
@@ -9,7 +11,9 @@ def print(*args):
     tqdm.write(" ".join(str(arg) for arg in args))
 
 
-def export_uids(source_catalog, uids, directory, *, strict=False, omit_external=False):
+def export_uids(
+    source_catalog, uids, directory, *, strict=False, omit_external=False, dry_run=False
+):
     """
     Export Runs from a Catalog, given a list of RunStart unique IDs.
 
@@ -26,6 +30,8 @@ def export_uids(source_catalog, uids, directory, *, strict=False, omit_external=
     omit_external: Bool, optional
         If True, do not include any external files in the list of relevant
         files.
+    dry_run: Bool, optional
+        If True, do not write any files. False by default.
 
     Returns
     -------
@@ -38,9 +44,12 @@ def export_uids(source_catalog, uids, directory, *, strict=False, omit_external=
         for uid in uids:
             try:
                 run = source_catalog[uid]
-                files = export_run(run, directory, omit_external=omit_external)
+                files = export_run(
+                    run, directory, omit_external=omit_external, dry_run=dry_run
+                )
                 accumulated_files.extend(files)
             except Exception:
+                logger.exception("Error while exporting Run %r", uid)
                 if strict:
                     raise
                 failures.append(uid)
@@ -49,7 +58,9 @@ def export_uids(source_catalog, uids, directory, *, strict=False, omit_external=
     return accumulated_files, failures
 
 
-def export_catalog(source_catalog, directory, *, strict=False, omit_external=False):
+def export_catalog(
+    source_catalog, directory, *, strict=False, omit_external=False, dry_run=False
+):
     """
     Export all the Runs from a Catalog.
 
@@ -64,6 +75,8 @@ def export_catalog(source_catalog, directory, *, strict=False, omit_external=Fal
     omit_external: Bool, optional
         If True, do not include any external files in the list of relevant
         files.
+    dry_run: Bool, optional
+        If True, do not write any files. False by default.
 
     Returns
     -------
@@ -75,9 +88,12 @@ def export_catalog(source_catalog, directory, *, strict=False, omit_external=Fal
     with tqdm(total=len(source_catalog), position=1) as progress:
         for uid, run in source_catalog.items():
             try:
-                files = export_run(run, directory, omit_external=omit_external)
+                files = export_run(
+                    run, directory, omit_external=omit_external, dry_run=dry_run
+                )
                 accumulated_files.extend(files)
             except Exception:
+                logger.exception("Error while exporting Run %r", uid)
                 if strict:
                     raise
                 failures.append(uid)
@@ -86,7 +102,7 @@ def export_catalog(source_catalog, directory, *, strict=False, omit_external=Fal
     return accumulated_files, failures
 
 
-def export_run(run, directory, *, omit_external=False):
+def export_run(run, directory, *, omit_external=False, dry_run=False):
     """
     Export one Run.
 
@@ -98,6 +114,8 @@ def export_run(run, directory, *, omit_external=False):
     omit_external: Bool, optional
         If True, do not include any external files in the list of relevant
         files.
+    dry_run: Bool, optional
+        If True, do not write any files. False by default.
 
     Returns
     -------
@@ -111,9 +129,10 @@ def export_run(run, directory, *, omit_external=False):
             for name, doc in run.canonical(fill="no"):
                 if name == "resource":
                     resources.append(doc)
-                serializer(name, doc)
+                if not dry_run:
+                    serializer(name, doc)
                 progress.update()
     if not omit_external:
         for resource in resources:
-            files.update((resource["resource_path"], run.get_file_list(resource)))
+            files.update(run.get_file_list(resource))
     return sorted(files)

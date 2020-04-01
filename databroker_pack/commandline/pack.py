@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 import argparse
-import tempfile
+import functools
+import logging
 import sys
+import tempfile
 
 from suitcase.utils import MultiFileManager
 
@@ -10,9 +12,14 @@ from .._pack import export_catalog, export_uids
 
 
 MANIFEST_FILE_NAME = "external_files_manifest.txt"
+print = functools.partial(print, file=sys.stderr)
 
 
 def main():
+    with tempfile.NamedTemporaryFile("w", delete=False) as file:
+        error_logfile_name = file.name
+    error_handler = logging.FileHandler(error_logfile_name)
+    logging.getLogger("databroker_pack").addHandler(error_handler)
     parser = argparse.ArgumentParser(
         description="Pack up some Bluesky Runs into portable files.",
         formatter_class=argparse.RawTextHelpFormatter,
@@ -152,9 +159,14 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
     # manifest (but not in general).
     another_manager = MultiFileManager(args.directory, allowed_modes="a")
     try:
-        if args.query:
+        if args.query or args.all:
+            if args.all:
+                # --all is an alias for --query "{}"
+                raw_queries = ["{}"]
+            else:
+                raw_queries = args.query
             queries = []
-            for raw_query in args.query:
+            for raw_query in raw_queries:
                 # Parse string like "{'scan_id': 123}" to dict.
                 try:
                     query = dict(eval(raw_query, vars(databroker.queries)))
@@ -162,18 +174,19 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                     raise ValueError("Could not parse query {raw_query}.")
                 queries.append(query)
             combined_query = {"$and": queries}
-            print(f"Query parsed as {combined_query!r}")
             # HACK We need no_cursor_timeout only until databroker learns to
             # seamlessly remake cursors when they time out.
             results = catalog.search(combined_query, no_cursor_timeout=True)
             print(f"Query yielded {len(results)} result(s)")
             if not results:
                 sys.exit(1)
-            if not args.no_documents:
-                print(f"Writing documents....")
-                external_files, failures = export_catalog(
-                    results, manager, strict=args.strict, omit_external=args.no_manifest
-                )
+            external_files, failures = export_catalog(
+                results,
+                manager,
+                strict=args.strict,
+                omit_external=args.no_manifest,
+                dry_run=args.no_documents,
+            )
         elif args.uids:
             # Skip blank lines and commented lines.
             uids = []
@@ -186,31 +199,29 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             print(f"Found {len(uids)} uids.")
             if not uids:
                 sys.exit(1)
-            if not args.no_documents:
-                print(f"Writing documents....")
                 external_files, failures = export_uids(
                     catalog,
                     uids,
                     manager,
                     strict=args.strict,
                     omit_external=args.no_manifest,
+                    dry_run=args.no_documents,
                 )
         else:
             parser.error(
                 "Must specify which Runs to pack, --query ... or "
                 "--uids ... or --all."
             )
-        if not args.no_manfiest:
-            print(f"Writing manifest of external files....")
-            with another_manager.open(MANIFEST_FILE_NAME, "a") as file:
+        if not args.no_manifest:
+            with another_manager.open("manifest", MANIFEST_FILE_NAME, "a") as file:
                 file.write("\n".join(external_files))
         if failures:
             print(f"{len(failures)} Runs failed to pack.")
             with tempfile.NamedTemporaryFile("w", delete=False) as file:
-                print(
-                    "Writing unique IDs of Runs that failed to pack to " f"{file.name}"
-                )
+                print(f"See {file.name} for a list of uids of all Runs that failed.")
                 file.write("\n".join(failures))
+            print(f"See {error_logfile_name} for complete error logs.")
+            sys.exit(1)
     finally:
         manager.close()
         another_manager.close()
