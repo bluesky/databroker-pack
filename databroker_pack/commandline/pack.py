@@ -177,7 +177,6 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             # HACK We need no_cursor_timeout only until databroker learns to
             # seamlessly remake cursors when they time out.
             results = catalog.search(combined_query, no_cursor_timeout=True)
-            print(f"Query yielded {len(results)} result(s)")
             if not results:
                 sys.exit(1)
             external_files, failures = export_catalog(
@@ -214,13 +213,17 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             )
         if not args.no_manifest:
             with another_manager.open("manifest", MANIFEST_FILE_NAME, "a") as file:
+                # IF we are appending to a nonempty file, ensure we start on a
+                # new line.
+                if file.tell():
+                    file.write("\n")
                 file.write("\n".join(external_files))
         if failures:
             print(f"{len(failures)} Runs failed to pack.")
             with tempfile.NamedTemporaryFile("w", delete=False) as file:
-                print(f"See {file.name} for a list of uids of all Runs that failed.")
+                print(f"See {file.name} for a list of uids of Runs that failed.")
                 file.write("\n".join(failures))
-            print(f"See {error_logfile_name} for complete error logs.")
+            print(f"See {error_logfile_name} for error logs with more information.")
             sys.exit(1)
     finally:
         manager.close()
