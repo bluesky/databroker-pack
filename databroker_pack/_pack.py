@@ -8,7 +8,12 @@ import databroker.core
 import suitcase.msgpack
 from tqdm import tqdm
 
-__all__ = ("export_uids", "export_catalog", "export_run")
+__all__ = (
+    "export_uids",
+    "export_catalog",
+    "export_run",
+    "write_external_files_manifest",
+)
 logger = logging.getLogger(__name__)
 
 
@@ -18,7 +23,14 @@ def print(*args):
 
 
 def export_uids(
-    source_catalog, uids, directory, *, strict=False, external=None, dry_run=False
+    source_catalog,
+    uids,
+    directory,
+    *,
+    strict=False,
+    external=None,
+    dry_run=False,
+    handler_registry=None
 ):
     """
     Export Runs from a Catalog, given a list of RunStart unique IDs.
@@ -39,6 +51,8 @@ def export_uids(
         If 'omit', do not locate external files.
     dry_run: Bool, optional
         If True, do not write any files. False by default.
+    handler_registry: Union[Dict, None]
+        If None, automatic handler discovery is used.
 
     Returns
     -------
@@ -51,7 +65,13 @@ def export_uids(
         for uid in uids:
             try:
                 run = source_catalog[uid]
-                files = export_run(run, directory, external=external, dry_run=dry_run)
+                files = export_run(
+                    run,
+                    directory,
+                    external=external,
+                    dry_run=dry_run,
+                    handler_registry=handler_registry,
+                )
                 for root, set_ in files.items():
                     accumulated_files[root].update(set_)
             except Exception:
@@ -65,7 +85,13 @@ def export_uids(
 
 
 def export_catalog(
-    source_catalog, directory, *, strict=False, external=None, dry_run=False
+    source_catalog,
+    directory,
+    *,
+    strict=False,
+    external=None,
+    dry_run=False,
+    handler_registry=None
 ):
     """
     Export all the Runs from a Catalog.
@@ -84,6 +110,8 @@ def export_catalog(
         If 'omit', do not locate external files.
     dry_run: Bool, optional
         If True, do not write any files. False by default.
+    handler_registry: Union[Dict, None]
+        If None, automatic handler discovery is used.
 
     Returns
     -------
@@ -95,7 +123,13 @@ def export_catalog(
     with tqdm(total=len(source_catalog), position=1) as progress:
         for uid, run in source_catalog.items():
             try:
-                files = export_run(run, directory, external=external, dry_run=dry_run)
+                files = export_run(
+                    run,
+                    directory,
+                    external=external,
+                    dry_run=dry_run,
+                    handler_registry=handler_registry,
+                )
                 for root, set_ in files.items():
                     accumulated_files[root].update(set_)
             except Exception:
@@ -124,6 +158,7 @@ def export_run(run, directory, *, external=None, dry_run=False, handler_registry
     dry_run: Bool, optional
         If True, do not write any files. False by default.
     handler_registry: Union[Dict, None]
+        If None, automatic handler discovery is used.
 
     Returns
     -------
@@ -171,10 +206,10 @@ def write_external_files_manifest(manager, root, files):
     # other ways, so putting it here is just a convenience.)
     # We subract one because we do not count '/'.
     # So the root_index of '/tmp/weoifjew' is 2.
-    root_index = len(pathlib.Path(root).parts - 1)
+    root_index = len(pathlib.Path(root).parts) - 1
     name = MANIFEST_NAME_TEMPLATE.format(root_hash=root_hash, root_index=root_index)
     with manager.open("manifest", name, "a") as file:
-        # IF we are appending to a nonempty file, ensure we start
+        # If we are appending to a nonempty file, ensure we start
         # on a new line.
         if file.tell():
             file.write("\n")

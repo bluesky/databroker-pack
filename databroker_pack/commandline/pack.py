@@ -144,6 +144,14 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             "and again all together at the end."
         ),
     )
+    parser.add_argument(
+        "--handler-registry",
+        help=(
+            "Dict mapping specs to handler objects like "
+            "\"{'AD_HDF5': 'area_detector_handlers.handlers:AreaDetectorHDF5Handler'}\" "
+            "If unspecified, automatic handler discovery is used."
+        ),
+    )
     args = parser.parse_args()
     if args.no_manifests:
         external = "omit"
@@ -153,6 +161,33 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         external = None
     import databroker
     import databroker.queries
+    import databroker.core
+
+    if args.handler_registry is not None:
+        # Temporary limitation due to the fact that BlueskyRun.get_file_list()
+        # does not accept a custom Filler.
+        if not args.fill_external:
+            raise NotImplementedError(
+                "The --handler-registry parameter currently only works with "
+                "--fill-external. All other modes of handling external data "
+                "use automatic handler discovery only."
+            )
+        # There are two kinds of "parsing" happening here.
+        # 1. Go from stdin string to dict using ast.literal_eval.
+        # 2. Go from dict of strings to dict of actual handler classes using
+        #    parse_handler_registry.
+        try:
+            import ast
+
+            handler_registry = ast.literal_eval(args.handler_registry)
+        except Exception as exc:
+            raise ValueError(
+                "Could not parse --handler-registry {args.handler_registry}. "
+                "A dict of strings is expected."
+            ) from exc
+        handler_registry = databroker.core.parse_handler_registry(handler_registry)
+    else:
+        handler_registry = None
 
     catalog = databroker.catalog[args.catalog]()
     manager = MultiFileManager(args.directory)
@@ -186,6 +221,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 strict=args.strict,
                 external=external,
                 dry_run=args.no_documents,
+                handler_registry=handler_registry,
             )
         elif args.uids:
             # Skip blank lines and commented lines.
@@ -205,6 +241,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                     strict=args.strict,
                     external=external,
                     dry_run=args.no_documents,
+                    handler_registry=handler_registry,
                 )
         else:
             parser.error(
