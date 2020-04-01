@@ -50,7 +50,7 @@ setup(
     python_requires=">={}".format(".".join(str(n) for n in min_version)),
     packages=find_packages(exclude=["docs", "tests"]),
     entry_points={
-        "console_scripts": ["databroker = databroker_pack.commandline:main",],
+        "console_scripts": ["databroker-pack = databroker_pack.commandline.pack:main"],
     },
     include_package_data=True,
     package_data={
