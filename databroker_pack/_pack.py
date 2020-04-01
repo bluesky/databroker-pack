@@ -1,5 +1,7 @@
 import collections
+import hashlib
 import logging
+import pathlib
 
 import event_model
 import databroker.core
@@ -147,3 +149,33 @@ def export_run(run, directory, *, external=None, dry_run=False, handler_registry
             for resource in resources:
                 files[resource["root"]].update(run.get_file_list(resource))
     return dict(files)
+
+
+def write_external_files_manifest(manager, root, files):
+    """
+    Write a manifest of external files.
+
+    Parameters
+    ----------
+    manager: suitcase Manager object
+    root: Str
+    files: Iterable[Str]
+    """
+    MANIFEST_NAME_TEMPLATE = "external_files_manifest_{root_hash}_{root_index}.txt"
+    # This is just a unique ID to give the manifest file for each
+    # root a unique name. It is not a cryptographic hash.
+    root_hash = hashlib.md5(root.encode()).hexdigest()
+    # The is the number of parts of the path that comprise the
+    # root, so that we can reconstruct which part of the paths in
+    # the file are the "root". (This information is available in
+    # other ways, so putting it here is just a convenience.)
+    # We subract one because we do not count '/'.
+    # So the root_index of '/tmp/weoifjew' is 2.
+    root_index = len(pathlib.Path(root).parts - 1)
+    name = MANIFEST_NAME_TEMPLATE.format(root_hash=root_hash, root_index=root_index)
+    with manager.open("manifest", name, "a") as file:
+        # IF we are appending to a nonempty file, ensure we start
+        # on a new line.
+        if file.tell():
+            file.write("\n")
+        file.write("\n".join(sorted(files)))

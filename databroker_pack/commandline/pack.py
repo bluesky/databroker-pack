@@ -1,19 +1,16 @@
 #!/usr/bin/env python
 import argparse
 import functools
-import hashlib
 import logging
-import pathlib
 import sys
 import tempfile
 
 from suitcase.utils import MultiFileManager
 
 from ._utils import ListCatalogsAction, ShowVersionAction
-from .._pack import export_catalog, export_uids
+from .._pack import export_catalog, export_uids, write_external_files_manifest
 
 
-MANIFEST_NAME_TEMPLATE = "external_files_manifest_{root_hash}_{root_index}.txt"
 print = functools.partial(print, file=sys.stderr)
 
 
@@ -199,7 +196,6 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                     for line in uid_file.read().splitlines()
                     if line and not line.startswith("#")
                 )
-            print(f"Found {len(uids)} uids.")
             if not uids:
                 sys.exit(1)
                 external_files, failures = export_uids(
@@ -217,28 +213,8 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             )
         if not args.no_manifests:
             for root, files in external_files.items():
-                if not files:
-                    # fast path
-                    continue
-                # This is just a unique ID to give the manifest file for each
-                # root a unique name. It is not a cryptographic hash.
-                root_hash = hashlib.md5(root.encode()).hexdigest()
-                # The is the number of parts of the path that comprise the
-                # root, so that we can reconstruct which part of the paths in
-                # the file are the "root". (This information is available in
-                # other ways, so putting it here is just a convenience.)
-                # We subract one because we do not count '/'.
-                # So the root_index of '/tmp/weoifjew' is 2.
-                root_index = len(pathlib.Path(root).parts - 1)
-                name = MANIFEST_NAME_TEMPLATE.format(
-                    root_hash=root_hash, root_index=root_index
-                )
-                with manifest_manager.open("manifest", name, "a") as file:
-                    # IF we are appending to a nonempty file, ensure we start
-                    # on a new line.
-                    if file.tell():
-                        file.write("\n")
-                    file.write("\n".join(sorted(files)))
+                if files:
+                    write_external_files_manifest(manifest_manager, root, files)
         if failures:
             print(f"{len(failures)} Runs failed to pack.")
             with tempfile.NamedTemporaryFile("w", delete=False) as file:
