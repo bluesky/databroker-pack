@@ -224,6 +224,26 @@ def write_external_files_manifest(manager, root, files):
 
 
 def copy_external_files(target_directory, root, files):
+    """
+    Make a filesystem copy of the external files.
+
+    A filesystem copy is not always applicable/desirable. Use the
+    external_file_manifest_*.txt files to feed other file transfer mechanisms,
+    such as rsync or globus.
+
+    This is a wrapper around shutil.copy2.
+
+    Parameters
+    ----------
+    target_directory: Union[Str, Path]
+    root: Str
+    files: Iterable[Str]
+
+    Returns
+    -------
+    root_map: Dict
+        Maps original root (from Resoruce documents) to new root.
+    """
     root_hash = _root_hash(root)
     dest = str(pathlib.Path(target_directory, root_hash))
     for filename in tqdm(files, total=len(files), desc="Copying external files"):
@@ -236,6 +256,16 @@ def copy_external_files(target_directory, root, files):
 
 
 def write_msgpack_catalog_file(manager, paths, root_map):
+    """
+    Write a YAML file with configuration for an intake catalog.
+
+    Parameters
+    ----------
+    manager: suitcase Manager object
+    paths: Union[Str, List[Str]]
+        Location(s) of msgpack files encoding Documents.
+    root_map: Dict
+    """
     source = {"driver": "bluesky-msgpack-catalog", "args": {"paths": paths}}
     if root_map is not None:
         source["args"]["root_map"] = dict(root_map)
