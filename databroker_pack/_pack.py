@@ -228,10 +228,11 @@ def copy_external_files(target_directory, root, files):
     dest = str(pathlib.Path(target_directory, root_hash))
     for filename in tqdm(files, total=len(files), desc="Copying external files"):
         relative_path = pathlib.Path(filename).relative_to(root)
-        dest = str(target_directory / root_hash / relative_path)
-        os.makedirs(dest, exist_ok=True)
+        new_root = target_directory / root_hash
+        dest = new_root / relative_path
+        os.makedirs(dest.parent, exist_ok=True)
         shutil.copy2(filename, dest)
-    return {root: dest}
+    return {root: str(new_root)}
 
 
 def write_msgpack_catalog_file(manager, paths, root_map):
