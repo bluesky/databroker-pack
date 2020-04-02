@@ -1,18 +1,22 @@
 import collections
 import hashlib
 import logging
+import os
 import pathlib
+import shutil
 
 import event_model
 import databroker.core
 import suitcase.msgpack
 from tqdm import tqdm
+import yaml
 
 __all__ = (
     "export_uids",
     "export_catalog",
     "export_run",
     "write_external_files_manifest",
+    "write_msgpack_catalog_file",
 )
 logger = logging.getLogger(__name__)
 
@@ -30,7 +34,7 @@ def export_uids(
     strict=False,
     external=None,
     dry_run=False,
-    handler_registry=None
+    handler_registry=None,
 ):
     """
     Export Runs from a Catalog, given a list of RunStart unique IDs.
@@ -91,7 +95,7 @@ def export_catalog(
     strict=False,
     external=None,
     dry_run=False,
-    handler_registry=None
+    handler_registry=None,
 ):
     """
     Export all the Runs from a Catalog.
@@ -186,6 +190,12 @@ def export_run(run, directory, *, external=None, dry_run=False, handler_registry
     return dict(files)
 
 
+def _root_hash(root):
+    # This is just a unique ID to give the manifest file for each
+    # root a unique name. It is not a cryptographic hash.
+    return hashlib.md5(root.encode()).hexdigest()
+
+
 def write_external_files_manifest(manager, root, files):
     """
     Write a manifest of external files.
@@ -196,10 +206,7 @@ def write_external_files_manifest(manager, root, files):
     root: Str
     files: Iterable[Str]
     """
-    MANIFEST_NAME_TEMPLATE = "external_files_manifest_{root_hash}_{root_index}.txt"
-    # This is just a unique ID to give the manifest file for each
-    # root a unique name. It is not a cryptographic hash.
-    root_hash = hashlib.md5(root.encode()).hexdigest()
+    root_hash = _root_hash(root)
     # The is the number of parts of the path that comprise the
     # root, so that we can reconstruct which part of the paths in
     # the file are the "root". (This information is available in
@@ -207,10 +214,32 @@ def write_external_files_manifest(manager, root, files):
     # We subract one because we do not count '/'.
     # So the root_index of '/tmp/weoifjew' is 2.
     root_index = len(pathlib.Path(root).parts) - 1
-    name = MANIFEST_NAME_TEMPLATE.format(root_hash=root_hash, root_index=root_index)
+    name = f"external_files_manifest_{root_hash}_{root_index}.txt"
     with manager.open("manifest", name, "a") as file:
         # If we are appending to a nonempty file, ensure we start
         # on a new line.
         if file.tell():
             file.write("\n")
         file.write("\n".join(sorted(files)))
+
+
+def copy_external_files(target_directory, root, files):
+    root_hash = _root_hash(root)
+    dest = str(pathlib.Path(target_directory, root_hash))
+    for filename in tqdm(files, total=len(files), desc="Copying external files"):
+        relative_path = pathlib.Path(filename).relative_to(root)
+        dest = str(target_directory / root_hash / relative_path)
+        os.makedirs(dest, exist_ok=True)
+        shutil.copy2(filename, dest)
+    return {root: dest}
+
+
+def write_msgpack_catalog_file(manager, paths, root_map):
+    source = {"driver": "bluesky-msgpack-catalog", "args": {"paths": paths}}
+    if root_map is not None:
+        source["args"]["root_map"] = dict(root_map)
+    sources = {"catalog": source}
+    catalog = {"sources": sources}
+    FILENAME = "catalog.yml"
+    with manager.open("catalog_file", FILENAME, "xt") as file:
+        yaml.dump(catalog, file)

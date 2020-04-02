@@ -2,13 +2,20 @@
 import argparse
 import functools
 import logging
+import pathlib
 import sys
 import tempfile
 
 from suitcase.utils import MultiFileManager
 
 from ._utils import ListCatalogsAction, ShowVersionAction
-from .._pack import export_catalog, export_uids, write_external_files_manifest
+from .._pack import (
+    copy_external_files,
+    export_catalog,
+    export_uids,
+    write_msgpack_catalog_file,
+    write_external_files_manifest,
+)
 
 
 print = functools.partial(print, file=sys.stderr)
@@ -193,7 +200,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
     manager = MultiFileManager(args.directory)
     # Make a separate manager instance in order to allow appending to the
     # manifest (but not in general).
-    manifest_manager = MultiFileManager(args.directory, allowed_modes="a")
+    manifest_manager = MultiFileManager(args.directory, allowed_modes=("a", "xt"))
     try:
         if args.query or args.all:
             if args.all:
@@ -252,6 +259,22 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             for root, files in external_files.items():
                 if files:
                     write_external_files_manifest(manifest_manager, root, files)
+        if external is None:
+            # When external is None, external data is neither being filled into
+            # the Documents (external == 'fill') nor ignored (external ==
+            # 'omit') so we have to provide a root_map in the catalog file to
+            # reference its location.
+            if args.copy_external:
+                root_map = {}
+                target_drectory = pathlib.Path(args.directory, "external_files")
+                for root, files in external_files.items():
+                    mapping = copy_external_files(target_drectory, root, files)
+                    root_map.update(mapping)
+            else:
+                # Make root_map an identity map.
+                root_map = {k: k for k in external_files}
+        path = str(pathlib.Path(args.directory, "./*.msgpack").absolute())
+        write_msgpack_catalog_file(manifest_manager, path, root_map)
         if failures:
             print(f"{len(failures)} Runs failed to pack.")
             with tempfile.NamedTemporaryFile("w", delete=False) as file:
