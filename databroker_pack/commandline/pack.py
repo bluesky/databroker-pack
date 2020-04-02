@@ -289,26 +289,26 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             for root, files in external_files.items():
                 if files:
                     write_external_files_manifest(manager, root, files)
+        root_map = {}
         if external is None:
             # When external is None, external data is neither being filled into
             # the Documents (external == 'fill') nor ignored (external ==
             # 'omit') so we have to provide a root_map in the catalog file to
             # reference its location.
             if args.copy_external:
-                root_map = {}
                 target_drectory = pathlib.Path(args.directory, "external_files")
                 for root, files in external_files.items():
                     mapping = copy_external_files(target_drectory, root, files)
                     root_map.update(mapping)
             else:
                 # Make root_map an identity map.
-                root_map = {k: k for k in external_files}
+                root_map.update({k: k for k in external_files})
         if args.format == "jsonl":
-            paths = [pathlib.Path(args.directory, "./*.jsonl")]
-            write_jsonl_catalog_file(manager, paths, root_map)
+            paths = ["./*.jsonl"]
+            write_jsonl_catalog_file(manager, args.directory, paths, root_map)
         elif args.format == "msgpack":
-            paths = [pathlib.Path(args.directory, "./*.msgpack")]
-            write_msgpack_catalog_file(manager, paths, root_map)
+            paths = ["./*.msgpack"]
+            write_msgpack_catalog_file(manager, args.directory, paths, root_map)
         # No need for an else here; we validated that it is one of these above.
         if failures:
             print(f"{len(failures)} Runs failed to pack.")

@@ -74,7 +74,7 @@ def export_uids(
     """
     accumulated_files = collections.defaultdict(set)
     failures = []
-    with tqdm(total=len(uids), position=1) as progress:
+    with tqdm(total=len(uids), position=1, desc="Writing Documents") as progress:
         for uid in uids:
             try:
                 run = source_catalog[uid]
@@ -289,22 +289,24 @@ def copy_external_files(target_directory, root, files):
     return {root: str(new_root)}
 
 
-def write_msgpack_catalog_file(manager, paths, root_map):
+def write_msgpack_catalog_file(manager, directory, paths, root_map):
     """
     Write a YAML file with configuration for an intake catalog.
 
     Parameters
     ----------
     manager: suitcase Manager object
-    paths: List[Path]
-        Location(s) of msgpack files encoding Documents.
+    directory: Str
+        Directory to which paths below are relative
+    paths: Union[Str, List[Str]]
+        Relative (s) of JSONL files encoding Documents.
     root_map: Dict
     """
     # Ideally, the drivers should be able to cope with relative paths,
     # interpreting them as relative to the Catalog file. This requires changes
     # to intake (I think) so as a short-term hack, we make the paths aboslute
     # here but note the relative paths in a separate place.
-    abs_paths = [str(path.absolute()) for path in paths]
+    abs_paths = [str(pathlib.Path(path).absolute()) for path in paths]
     metadata = {
         "generated_by": {
             "library": "databroker_pack",
@@ -326,15 +328,17 @@ def write_msgpack_catalog_file(manager, paths, root_map):
         yaml.dump(catalog, file)
 
 
-def write_jsonl_catalog_file(manager, paths, root_map):
+def write_jsonl_catalog_file(manager, directory, paths, root_map):
     """
     Write a YAML file with configuration for an intake catalog.
 
     Parameters
     ----------
     manager: suitcase Manager object
+    directory: Str
+        Directory to which paths below are relative
     paths: Union[Str, List[Str]]
-        Location(s) of JSONL files encoding Documents.
+        Relative (s) of JSONL files encoding Documents.
     root_map: Dict
     """
     # There is clearly some code repetition here with respect to
@@ -345,7 +349,7 @@ def write_jsonl_catalog_file(manager, paths, root_map):
     # interpreting them as relative to the Catalog file. This requires changes
     # to intake (I think) so as a short-term hack, we make the paths aboslute
     # here but note the relative paths in a separate place.
-    abs_paths = [str(path.absolute()) for path in paths]
+    abs_paths = [str(pathlib.Path(path).absolute()) for path in paths]
     metadata = {
         "generated_by": {
             "library": "databroker_pack",

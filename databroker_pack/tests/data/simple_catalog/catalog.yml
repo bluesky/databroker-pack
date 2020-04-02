@@ -11,4 +11,4 @@ sources:
         library: databroker_pack
         version: 0.post15.dev0+g25ee393
       relative_paths:
-      - databroker_pack/tests/data/simple_catalog/*.jsonl
+      - ./*.jsonl

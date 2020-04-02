@@ -7,18 +7,29 @@ import pytest
 @pytest.mark.parametrize(
     "cli_args",
     [
-        ["--all"],
-        ['--query  "{}"'],
         ["--version"],
         ["--list-catalogs"],
+        ["--all"],
+        ["--query",  "{}"],
         ["--all", "--no-documents"],
         ["--all", "--strict"],
         ["--all", "--no-manifests"],
-        ["--all", "--copy-files"],
+        ["--all", "--copy-external"],
         ["--all", "--fill-external"],
+        ["--all", "--fill-external", "--handler-registry", "{'NPY_SEQ': 'ophyd.sim.NumpySeqHandler'"],
+        # Repeat some of the above with JSONL instead of the default msgpack.
+        # We could use a second layer of parametrize here but that seems more
+        # confusing than helpful.
+        ["--format", "jsonl", "--query",  "{}"],
+        ["--format", "jsonl", "--all", "--no-documents"],
+        ["--format", "jsonl", "--all", "--strict"],
+        ["--format", "jsonl", "--all", "--no-manifests"],
+        ["--format", "jsonl", "--all", "--copy-external"],
+        ["--format", "jsonl", "--all", "--fill-external"],
+        ["--format", "jsonl", "--all", "--fill-external", "--handler-registry", "{'NPY_SEQ': 'ophyd.sim.NumpySeqHandler'"],
     ],
 )
-def test_smoke(cli_args, simple_catalog, tmpdir):
+def test_pack_smoke(cli_args, simple_catalog, tmpdir):
     "Smoke test common options."
     TIMEOUT = 10
     DIRECTORY = tmpdir
