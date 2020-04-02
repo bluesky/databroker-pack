@@ -10,6 +10,8 @@ import databroker.core
 from tqdm import tqdm
 import yaml
 
+from ._version import get_versions
+
 __all__ = (
     "export_uids",
     "export_catalog",
@@ -251,11 +253,7 @@ def write_external_files_manifest(manager, root, files):
     # So the root_index of '/tmp/weoifjew' is 2.
     root_index = len(pathlib.Path(root).parts) - 1
     name = f"external_files_manifest_{root_hash}_{root_index}.txt"
-    with manager.open("manifest", name, "a") as file:
-        # If we are appending to a nonempty file, ensure we start
-        # on a new line.
-        if file.tell():
-            file.write("\n")
+    with manager.open("manifest", name, "xt") as file:
         file.write("\n".join(sorted(files)))
 
 
@@ -298,16 +296,32 @@ def write_msgpack_catalog_file(manager, paths, root_map):
     Parameters
     ----------
     manager: suitcase Manager object
-    paths: Union[Str, List[Str]]
+    paths: List[Path]
         Location(s) of msgpack files encoding Documents.
     root_map: Dict
     """
-    source = {"driver": "bluesky-msgpack-catalog", "args": {"paths": paths}}
+    # Ideally, the drivers should be able to cope with relative paths,
+    # interpreting them as relative to the Catalog file. This requires changes
+    # to intake (I think) so as a short-term hack, we make the paths aboslute
+    # here but note the relative paths in a separate place.
+    abs_paths = [str(path.absolute()) for path in paths]
+    metadata = {
+        "generated_by": {
+            "library": "databroker_pack",
+            "version": get_versions()["version"],
+        },
+        "relative_paths": [str(path) for path in paths],
+    }
+    source = {
+        "driver": "bluesky-msgpack-catalog",
+        "args": {"paths": abs_paths},
+        "metadata": metadata,
+    }
     if root_map is not None:
-        source["args"]["root_map"] = dict(root_map)
-    sources = {"catalog": source}
+        source["args"]["root_map"] = {str(k): str(v) for k, v in root_map.items()}
+    sources = {"packed_catalog": source}
     catalog = {"sources": sources}
-    FILENAME = "catalog.yml"
+    FILENAME = "catalog.yml"  # expected by unpack
     with manager.open("catalog_file", FILENAME, "xt") as file:
         yaml.dump(catalog, file)
 
@@ -326,10 +340,27 @@ def write_jsonl_catalog_file(manager, paths, root_map):
     # There is clearly some code repetition here with respect to
     # write_msgpack_catalog_file, but I expect they may diverge over time as
     # the suitcase implementation pick up format-specific options.
-    source = {"driver": "bluesky-jsonl-catalog", "args": {"paths": paths}}
+
+    # Ideally, the drivers should be able to cope with relative paths,
+    # interpreting them as relative to the Catalog file. This requires changes
+    # to intake (I think) so as a short-term hack, we make the paths aboslute
+    # here but note the relative paths in a separate place.
+    abs_paths = [str(path.absolute()) for path in paths]
+    metadata = {
+        "generated_by": {
+            "library": "databroker_pack",
+            "version": get_versions()["version"],
+        },
+        "relative_paths": [str(path) for path in paths],
+    }
+    source = {
+        "driver": "bluesky-jsonl-catalog",
+        "args": {"paths": abs_paths},
+        "metadata": metadata,
+    }
     if root_map is not None:
-        source["args"]["root_map"] = dict(root_map)
-    sources = {"catalog": source}
+        source["args"]["root_map"] = {str(k): str(v) for k, v in root_map.items()}
+    sources = {"packed_catalog": source}
     catalog = {"sources": sources}
     FILENAME = "catalog.yml"
     with manager.open("catalog_file", FILENAME, "xt") as file:

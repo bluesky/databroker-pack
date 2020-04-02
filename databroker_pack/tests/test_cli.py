@@ -7,7 +7,7 @@ import pytest
 @pytest.mark.parametrize(
     "cli_args",
     [
-        ["--all'"],
+        ["--all"],
         ['--query  "{}"'],
         ["--version"],
         ["--list-catalogs"],
@@ -18,11 +18,11 @@ import pytest
         ["--all", "--fill-external"],
     ],
 )
-def test_smoke(cli_args, tmpdir):
+def test_smoke(cli_args, simple_catalog, tmpdir):
     "Smoke test common options."
     TIMEOUT = 10
     DIRECTORY = tmpdir
-    CATALOG = ...
+    CATALOG = simple_catalog
     p = subprocess.Popen(
         [sys.executable, "-um", "databroker_pack.commandline.pack"]
         + [CATALOG, DIRECTORY]

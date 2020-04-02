@@ -133,3 +133,7 @@ class PipeStringToCat(PipeToCat):
 class PipeBytesToCat(PipeToCat):
     def write(self, b):
         return self._process.stdin.write(b)
+
+
+class CatalogNameExists(ValueError):
+    ...

@@ -222,9 +222,6 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
 
     catalog = databroker.catalog[args.catalog]()
     manager = MultiFileManager(args.directory)
-    # Make a separate manager instance in order to allow appending to the
-    # manifest (but not in general).
-    manifest_manager = MultiFileManager(args.directory, allowed_modes=("a", "xt"))
     try:
         if args.query or args.all:
             if args.all:
@@ -243,8 +240,14 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             combined_query = {"$and": queries}
             # HACK We need no_cursor_timeout only until databroker learns to
             # seamlessly remake cursors when they time out.
-            results = catalog.search(combined_query, no_cursor_timeout=True)
+            try:
+                results = catalog.search(combined_query, no_cursor_timeout=True)
+            except TypeError:
+                # Drivers that are not Mongo drivers will not support
+                # no_cursor_timeout.
+                results = catalog.search(combined_query)
             if not results:
+                print(f"Query {combined_query} yielded no results. Exiting.")
                 sys.exit(1)
             external_files, failures = export_catalog(
                 results,
@@ -265,6 +268,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                     if line and not line.startswith("#")
                 )
             if not uids:
+                print("Found empty input for --uids. Exiting")
                 sys.exit(1)
                 external_files, failures = export_uids(
                     catalog,
@@ -284,7 +288,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         if not args.no_manifests:
             for root, files in external_files.items():
                 if files:
-                    write_external_files_manifest(manifest_manager, root, files)
+                    write_external_files_manifest(manager, root, files)
         if external is None:
             # When external is None, external data is neither being filled into
             # the Documents (external == 'fill') nor ignored (external ==
@@ -300,11 +304,11 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 # Make root_map an identity map.
                 root_map = {k: k for k in external_files}
         if args.format == "jsonl":
-            path = str(pathlib.Path(args.directory, "./*.jsonl").absolute())
-            write_jsonl_catalog_file(manifest_manager, path, root_map)
+            paths = [pathlib.Path(args.directory, "./*.jsonl")]
+            write_jsonl_catalog_file(manager, paths, root_map)
         elif args.format == "msgpack":
-            path = str(pathlib.Path(args.directory, "./*.msgpack").absolute())
-            write_msgpack_catalog_file(manifest_manager, path, root_map)
+            paths = [pathlib.Path(args.directory, "./*.msgpack")]
+            write_msgpack_catalog_file(manager, paths, root_map)
         # No need for an else here; we validated that it is one of these above.
         if failures:
             print(f"{len(failures)} Runs failed to pack.")
@@ -315,7 +319,6 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             sys.exit(1)
     finally:
         manager.close()
-        manifest_manager.close()
 
 
 if __name__ == "__main__":
