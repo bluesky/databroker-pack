@@ -285,3 +285,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
     finally:
         manager.close()
         manifest_manager.close()
+
+
+if __name__ == "__main__":
+    main()
