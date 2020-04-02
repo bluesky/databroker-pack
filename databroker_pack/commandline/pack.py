@@ -13,6 +13,7 @@ from .._pack import (
     copy_external_files,
     export_catalog,
     export_uids,
+    write_jsonl_catalog_file,
     write_msgpack_catalog_file,
     write_external_files_manifest,
 )
@@ -84,6 +85,9 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             "file with all the relevant file paths. Other options:"
         )
     ).add_mutually_exclusive_group()
+    # By making a group "other" we can place the less-frequently-used options
+    # at the bottom.
+    other_group = parser.add_argument_group()
     parser.add_argument("catalog", type=str, help="Catalog name")
     parser.add_argument("directory", type=str, help="Path to output directory")
     parser.add_argument(
@@ -91,13 +95,6 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         action="list_catalogs",
         default=argparse.SUPPRESS,
         help="List allowed values for catalog and exit.",
-    )
-    parser.add_argument(
-        "-V",
-        "--version",
-        action="show_version",
-        default=argparse.SUPPRESS,
-        help="Show databroker_pack version and exit.",
     )
     filter_group.add_argument(
         "--all", action="store_true", help="Export every Run in this Catalog."
@@ -139,10 +136,21 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             "Set this to omit those manifests."
         ),
     )
-    parser.add_argument(
+    other_group.add_argument(
+        "--format",
+        default="msgpack",
+        choices=["msgpack", "jsonl"],
+        type=str.lower,  # Makes choices case-insensitive
+        help=(
+            "Format for Documents in the pack output. Choise msgpack "
+            "(default) for binary speed/compactness. Choose jsonl for "
+            "plaintext."
+        ),
+    )
+    other_group.add_argument(
         "--no-documents", action="store_true", help="Do not pack the Documents.",
     )
-    parser.add_argument(
+    other_group.add_argument(
         "--strict",
         action="store_true",
         help=(
@@ -151,7 +159,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             "and again all together at the end."
         ),
     )
-    parser.add_argument(
+    other_group.add_argument(
         "--handler-registry",
         help=(
             "Dict mapping specs to handler objects like "
@@ -159,7 +167,23 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             "If unspecified, automatic handler discovery is used."
         ),
     )
+    other_group.add_argument(
+        "-V",
+        "--version",
+        action="show_version",
+        default=argparse.SUPPRESS,
+        help="Show databroker_pack version and exit.",
+    )
     args = parser.parse_args()
+    # We hide the imports here just for speed.
+    if args.format == "msgpack":
+        import suitcase.msgpack
+
+        serializer_class = suitcase.msgpack.Serializer
+    if args.format == "jsonl":
+        import suitcase.jsonl
+
+        serializer_class = suitcase.jsonl.Serializer
     if args.no_manifests:
         external = "omit"
     elif args.fill_external:
@@ -229,6 +253,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 external=external,
                 dry_run=args.no_documents,
                 handler_registry=handler_registry,
+                serializer_class=serializer_class,
             )
         elif args.uids:
             # Skip blank lines and commented lines.
@@ -249,6 +274,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                     external=external,
                     dry_run=args.no_documents,
                     handler_registry=handler_registry,
+                    serializer_class=serializer_class,
                 )
         else:
             parser.error(
@@ -273,8 +299,13 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             else:
                 # Make root_map an identity map.
                 root_map = {k: k for k in external_files}
-        path = str(pathlib.Path(args.directory, "./*.msgpack").absolute())
-        write_msgpack_catalog_file(manifest_manager, path, root_map)
+        if args.format == "jsonl":
+            path = str(pathlib.Path(args.directory, "./*.jsonl").absolute())
+            write_jsonl_catalog_file(manifest_manager, path, root_map)
+        elif args.format == "msgpack":
+            path = str(pathlib.Path(args.directory, "./*.msgpack").absolute())
+            write_msgpack_catalog_file(manifest_manager, path, root_map)
+        # No need for an else here; we validated that it is one of these above.
         if failures:
             print(f"{len(failures)} Runs failed to pack.")
             with tempfile.NamedTemporaryFile("w", delete=False) as file:

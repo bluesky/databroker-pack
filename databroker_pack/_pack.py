@@ -7,7 +7,6 @@ import shutil
 
 import event_model
 import databroker.core
-import suitcase.msgpack
 from tqdm import tqdm
 import yaml
 
@@ -35,6 +34,7 @@ def export_uids(
     external=None,
     dry_run=False,
     handler_registry=None,
+    serializer_class=None,
 ):
     """
     Export Runs from a Catalog, given a list of RunStart unique IDs.
@@ -44,8 +44,9 @@ def export_uids(
     source_catalog: Catalog
     uids: List[Str]
         List of RunStart unique IDs
-    directory: Str
-        Where msgpack files containing documents will be written
+    directory: Union[Str, Manager]
+        Where files containing documents will be written, or a Manager for
+        writing to non-file buffers.
     strict: Bool, optional
         By default, swallow erros and return a lits of them at the end.
         Set to True to debug errors.
@@ -57,6 +58,12 @@ def export_uids(
         If True, do not write any files. False by default.
     handler_registry: Union[Dict, None]
         If None, automatic handler discovery is used.
+    serializer_class: Serializer
+        Expected to be a lossless serializer that encodes a format for which
+        there is a corresponding databroker intake driver. Default (None) is
+        currently ``suitcase.msgpack.Serializer``, but this may change in the
+        future. If you want ``suitcase.msgpack.Serializer`` specifically, pass
+        it in explicitly.
 
     Returns
     -------
@@ -75,6 +82,7 @@ def export_uids(
                     external=external,
                     dry_run=dry_run,
                     handler_registry=handler_registry,
+                    serializer_class=serializer_class,
                 )
                 for root, set_ in files.items():
                     accumulated_files[root].update(set_)
@@ -96,6 +104,7 @@ def export_catalog(
     external=None,
     dry_run=False,
     handler_registry=None,
+    serializer_class=None,
 ):
     """
     Export all the Runs from a Catalog.
@@ -103,8 +112,9 @@ def export_catalog(
     Parameters
     ----------
     source_catalog: Catalog
-    directory: Str
-        Where msgpack files containing documents will be written
+    directory: Union[Str, Manager]
+        Where files containing documents will be written, or a Manager for
+        writing to non-file buffers.
     strict: Bool, optional
         By default, swallow erros and return a lits of them at the end.
         Set to True to debug errors.
@@ -116,6 +126,12 @@ def export_catalog(
         If True, do not write any files. False by default.
     handler_registry: Union[Dict, None]
         If None, automatic handler discovery is used.
+    serializer_class: Serializer
+        Expected to be a lossless serializer that encodes a format for which
+        there is a corresponding databroker intake driver. Default (None) is
+        currently ``suitcase.msgpack.Serializer``, but this may change in the
+        future. If you want ``suitcase.msgpack.Serializer`` specifically, pass
+        it in explicitly.
 
     Returns
     -------
@@ -133,6 +149,7 @@ def export_catalog(
                     external=external,
                     dry_run=dry_run,
                     handler_registry=handler_registry,
+                    serializer_class=serializer_class,
                 )
                 for root, set_ in files.items():
                     accumulated_files[root].update(set_)
@@ -146,15 +163,24 @@ def export_catalog(
     return dict(accumulated_files), failures
 
 
-def export_run(run, directory, *, external=None, dry_run=False, handler_registry=None):
+def export_run(
+    run,
+    directory,
+    *,
+    external=None,
+    dry_run=False,
+    handler_registry=None,
+    serializer_class=None,
+):
     """
     Export one Run.
 
     Parameters
     ----------
     run: BlueskyRun
-    directory: Str
-        Where msgpack files containing documents will be written
+    directory: Union[Str, Manager]
+        Where files containing documents will be written, or a Manager for
+        writing to non-file buffers.
     external: {None, 'fill', 'omit')
         If None, return the paths to external files.
         If 'fill', fill the external data into the Documents.
@@ -163,18 +189,28 @@ def export_run(run, directory, *, external=None, dry_run=False, handler_registry
         If True, do not write any files. False by default.
     handler_registry: Union[Dict, None]
         If None, automatic handler discovery is used.
+    serializer_class: Serializer, optional
+        Expected to be a lossless serializer that encodes a format for which
+        there is a corresponding databroker intake driver. Default (None) is
+        currently ``suitcase.msgpack.Serializer``, but this may change in the
+        future. If you want ``suitcase.msgpack.Serializer`` specifically, pass
+        it in explicitly.
 
     Returns
     -------
     files: Dict[Str, Set[Str]]
         Maps each "root" to a set of absolute file paths.
     """
+    if serializer_class is None:
+        import suitcase.msgpack
+
+        serializer_class = suitcase.msgpack.Serializer
     resources = []
     files = collections.defaultdict(set)
     if handler_registry is None:
         handler_registry = databroker.core.discover_handlers()
     with event_model.Filler(handler_registry, inplace=False) as filler:
-        with suitcase.msgpack.Serializer(directory) as serializer:
+        with serializer_class(directory) as serializer:
             with tqdm(position=0) as progress:
                 for name, doc in run.canonical(fill="no"):
                     if name == "resource":
@@ -267,6 +303,30 @@ def write_msgpack_catalog_file(manager, paths, root_map):
     root_map: Dict
     """
     source = {"driver": "bluesky-msgpack-catalog", "args": {"paths": paths}}
+    if root_map is not None:
+        source["args"]["root_map"] = dict(root_map)
+    sources = {"catalog": source}
+    catalog = {"sources": sources}
+    FILENAME = "catalog.yml"
+    with manager.open("catalog_file", FILENAME, "xt") as file:
+        yaml.dump(catalog, file)
+
+
+def write_jsonl_catalog_file(manager, paths, root_map):
+    """
+    Write a YAML file with configuration for an intake catalog.
+
+    Parameters
+    ----------
+    manager: suitcase Manager object
+    paths: Union[Str, List[Str]]
+        Location(s) of JSONL files encoding Documents.
+    root_map: Dict
+    """
+    # There is clearly some code repetition here with respect to
+    # write_msgpack_catalog_file, but I expect they may diverge over time as
+    # the suitcase implementation pick up format-specific options.
+    source = {"driver": "bluesky-jsonl-catalog", "args": {"paths": paths}}
     if root_map is not None:
         source["args"]["root_map"] = dict(root_map)
     sources = {"catalog": source}
