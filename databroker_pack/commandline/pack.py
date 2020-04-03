@@ -129,7 +129,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         help="Place external data directly in the documents.",
     )
     external_group.add_argument(
-        "--no-manifests",
+        "--ignore-external",
         action="store_true",
         help=(
             "By default, the locations of all relevant external files on the "
@@ -185,8 +185,8 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         import suitcase.jsonl
 
         serializer_class = suitcase.jsonl.Serializer
-    if args.no_manifests:
-        external = "omit"
+    if args.ignore_external:
+        external = "ignore"
     elif args.fill_external:
         external = "fill"
     else:
@@ -291,7 +291,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         if external is None:
             # When external is None, external data is neither being filled into
             # the Documents (external == 'fill') nor ignored (external ==
-            # 'omit') so we have to provide a root_map in the catalog file to
+            # 'ignore') so we have to provide a root_map in the catalog file to
             # reference its location.
             if args.copy_external:
                 target_drectory = pathlib.Path(args.directory, "external_files")

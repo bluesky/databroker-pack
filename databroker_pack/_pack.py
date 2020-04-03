@@ -54,10 +54,10 @@ def export_uids(
     strict: Bool, optional
         By default, swallow erros and return a lits of them at the end.
         Set to True to debug errors.
-    external: {None, 'fill', 'omit')
+    external: {None, 'fill', 'ignore')
         If None, return the paths to external files.
         If 'fill', fill the external data into the Documents.
-        If 'omit', do not locate external files.
+        If 'ignore', do not locate external files.
     dry_run: Bool, optional
         If True, do not write any files. False by default.
     handler_registry: Union[Dict, None]
@@ -127,10 +127,10 @@ def export_catalog(
     strict: Bool, optional
         By default, swallow erros and return a lits of them at the end.
         Set to True to debug errors.
-    external: {None, 'fill', 'omit')
+    external: {None, 'fill', 'ignore')
         If None, return the paths to external files.
         If 'fill', fill the external data into the Documents.
-        If 'omit', do not locate external files.
+        If 'ignore', do not locate external files.
     dry_run: Bool, optional
         If True, do not write any files. False by default.
     handler_registry: Union[Dict, None]
@@ -195,10 +195,10 @@ def export_run(
     directory: Union[Str, Manager]
         Where files containing documents will be written, or a Manager for
         writing to non-file buffers.
-    external: {None, 'fill', 'omit')
+    external: {None, 'fill', 'ignore')
         If None, return the paths to external files.
         If 'fill', fill the external data into the Documents.
-        If 'omit', do not locate external files.
+        If 'ignore', do not locate external files.
     dry_run: Bool, optional
         If True, do not write any files. False by default.
     handler_registry: Union[Dict, None]

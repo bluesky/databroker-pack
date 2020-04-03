@@ -13,7 +13,7 @@ import pytest
         ["--query", "{}"],
         ["--all", "--no-documents"],
         ["--all", "--strict"],
-        ["--all", "--no-manifests"],
+        ["--all", "--ignore-external"],
         ["--all", "--copy-external"],
         ["--all", "--fill-external"],
         [
@@ -28,7 +28,7 @@ import pytest
         ["--format", "jsonl", "--query", "{}"],
         ["--format", "jsonl", "--all", "--no-documents"],
         ["--format", "jsonl", "--all", "--strict"],
-        ["--format", "jsonl", "--all", "--no-manifests"],
+        ["--format", "jsonl", "--all", "--ignore-external"],
         ["--format", "jsonl", "--all", "--copy-external"],
         ["--format", "jsonl", "--all", "--fill-external"],
         [
