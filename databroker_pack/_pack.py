@@ -243,7 +243,7 @@ def write_external_files_manifest(manager, root, files):
     ----------
     manager: suitcase Manager object
     root: Str
-    files: Iterable[Str]
+    files: Iterable[Union[Str, Path]]
     """
     root_hash = _root_hash(root)
     # The is the number of parts of the path that comprise the
@@ -255,7 +255,7 @@ def write_external_files_manifest(manager, root, files):
     root_index = len(pathlib.Path(root).parts) - 1
     name = f"external_files_manifest_{root_hash}_{root_index}.txt"
     with manager.open("manifest", name, "xt") as file:
-        file.write("\n".join(sorted(files)))
+        file.write("\n".join(sorted((str(f) for f in files))))
 
 
 def copy_external_files(target_directory, root, files):
@@ -276,18 +276,18 @@ def copy_external_files(target_directory, root, files):
 
     Returns
     -------
-    root_map: Dict
-        Maps original root (from Resoruce documents) to new root.
+    new_root, new_files
     """
     root_hash = _root_hash(root)
     dest = str(pathlib.Path(target_directory, root_hash))
+    new_files = []
     for filename in tqdm(files, total=len(files), desc="Copying external files"):
         relative_path = pathlib.Path(filename).relative_to(root)
         new_root = target_directory / root_hash
         dest = new_root / relative_path
         os.makedirs(dest.parent, exist_ok=True)
-        shutil.copy2(filename, dest)
-    return {root: str(new_root)}
+        new_files.append(shutil.copy2(filename, dest))
+    return new_root, new_files
 
 
 def write_msgpack_catalog_file(manager, directory, paths, root_map):
@@ -307,7 +307,7 @@ def write_msgpack_catalog_file(manager, directory, paths, root_map):
     # interpreting them as relative to the Catalog file. This requires changes
     # to intake (I think) so as a short-term hack, we make the paths aboslute
     # here but note the relative paths in a separate place.
-    abs_paths = [str(pathlib.Path(path).absolute()) for path in paths]
+    abs_paths = [str(pathlib.Path(directory, path).absolute()) for path in paths]
     metadata = {
         "generated_by": {
             "library": "databroker_pack",
@@ -350,7 +350,7 @@ def write_jsonl_catalog_file(manager, directory, paths, root_map):
     # interpreting them as relative to the Catalog file. This requires changes
     # to intake (I think) so as a short-term hack, we make the paths aboslute
     # here but note the relative paths in a separate place.
-    abs_paths = [str(pathlib.Path(path).absolute()) for path in paths]
+    abs_paths = [str(pathlib.Path(directory, path).absolute()) for path in paths]
     metadata = {
         "generated_by": {
             "library": "databroker_pack",

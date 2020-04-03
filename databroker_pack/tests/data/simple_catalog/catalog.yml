@@ -4,11 +4,11 @@ sources:
       paths:
       - /home/dallan/Repos/bnl/databroker-pack/databroker_pack/tests/data/simple_catalog/*.jsonl
       root_map:
-        /tmp/tmpp5_kcw9q: databroker_pack/tests/data/simple_catalog/external_files/8c16589573582bf61abd8fd72919a557
+        /tmp/tmpp5_kcw9q: external_files/8c16589573582bf61abd8fd72919a557
     driver: bluesky-jsonl-catalog
     metadata:
       generated_by:
         library: databroker_pack
-        version: 0.post15.dev0+g25ee393
+        version: 0.post17.dev0+g1dd2188
       relative_paths:
       - ./*.jsonl

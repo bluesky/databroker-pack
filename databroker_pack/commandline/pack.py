@@ -285,10 +285,6 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 "Must specify which Runs to pack, --query ... or "
                 "--uids ... or --all."
             )
-        if not args.no_manifests:
-            for root, files in external_files.items():
-                if files:
-                    write_external_files_manifest(manager, root, files)
         root_map = {}
         if external is None:
             # When external is None, external data is neither being filled into
@@ -298,11 +294,21 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             if args.copy_external:
                 target_drectory = pathlib.Path(args.directory, "external_files")
                 for root, files in external_files.items():
-                    mapping = copy_external_files(target_drectory, root, files)
-                    root_map.update(mapping)
+                    new_root, new_files = copy_external_files(
+                        target_drectory, root, files
+                    )
+                    # Record the root relative to the pack directory.
+                    relative_root = new_root.relative_to(args.directory)
+                    root_map.update({root: relative_root})
+                    rel_paths = [
+                        pathlib.Path(f).relative_to(args.directory) for f in new_files
+                    ]
+                    write_external_files_manifest(manager, root, rel_paths)
             else:
-                # Make root_map an identity map.
-                root_map.update({k: k for k in external_files})
+                for root, files in external_files.items():
+                    # Make root_map an identity map.
+                    root_map.update({root: root})
+                    write_external_files_manifest(manager, root, files)
         if args.format == "jsonl":
             paths = ["./*.jsonl"]
             write_jsonl_catalog_file(manager, args.directory, paths, root_map)
