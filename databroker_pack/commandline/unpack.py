@@ -5,6 +5,7 @@ from .._unpack import unpack
 from ._utils import ListCatalogsAction, ShowVersionAction
 from .._utils import CatalogNameExists
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Install a Catalog of packed Bluesky Runs.",
@@ -34,20 +35,22 @@ def main():
         import databroker
         import itertools
         import shutil
+
         term_size = shutil.get_terminal_size((100, 50))
         extant_catalogs = sorted(databroker.catalog)
+        ncats = len(extant_catalogs)
         col_width = max(len(_) for _ in extant_catalogs) + 5
         ncols = max(term_size.columns // col_width, 1)
 
-        format_str = f'{{:<{col_width}}}'*ncols
+        format_str = f"{{:<{col_width}}}" * ncols
 
-        def grouper(iterable, n, fillvalue=''):
-            "Collect data into fixed-length chunks or blocks"
-            # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
-            args = [iter(iterable)] * n
-            return itertools.zip_longest(*args, fillvalue=fillvalue)
+        n_rows = (ncats // ncols) + int(ncols % ncols > 0)
 
-        nice_names = "\n".join(format_str.format(*g) for g in grouper(extant_catalogs, ncols))
+        cols = [extant_catalogs[j * n_rows : (j + 1) * n_rows] for j in range(ncols)]
+
+        nice_names = "\n".join(
+            format_str.format(*g) for g in itertools.zip_longest(*cols, fillvalue="")
+        )
 
         msg = f"""
 You tried to unpack to a catalog named {args.name} which already exists.
