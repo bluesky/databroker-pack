@@ -12,6 +12,7 @@ cache:
 install:
   # Using the latest pip tends to ameliorate issues with upstream packages.
   - pip install --upgrade pip
+  - pip install --upgrade numpy
   # Install this package and the packages listed in requirements.txt.
   - pip install .
   # Needs an unreleased improvement to databroker
