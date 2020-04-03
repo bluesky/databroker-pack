@@ -5,4 +5,81 @@ Usage
 There is a Python interface, but most users will find the commandline tool
 suitable for their needs.
 
-.. code-block:: bash
+For the command line tool you must provide:
+
+* The name of the source catalog
+* The name of the target directory
+* Which Runs in the Catalog to pack: either ``--all``, a query such as a time
+  window, or a list of ``--uids``.
+
+Examples
+--------
+
+List the available options for ``CATALOG`` and exit.
+
+.. code:: bash
+
+   databroker-pack --list-catalogs
+   <list of catalog names>
+
+Export every Run in the Catalog into a self-contained directory with Documents
+and any external files (e.g. large array data from detectors).
+
+.. code:: bash
+
+   databroker-pack CATALOG --all DIRECTORY --copy-external
+
+Or, read the data from the external files and place it directly in the
+documents. This may make data access slower and less flexible, but it removes
+the requiment for the recipient to install any special I/O code to deal with
+detector formats.
+
+.. code:: bash
+
+   databroker-pack CATALOG --all DIRECTORY --fill-external
+
+Or, omit the external files and transfer them separately. The ``DIRECTORY``
+will still contain text file *manifests* listing the locations of the external
+files on the source system, suitable for feeding to tools like ``rsync`` or
+``globus transfer --batch``. This is like the recommended approach for very
+large transfers.
+
+.. code:: bash
+
+   databroker-pack CATALOG --all DIRECTORY
+
+Export Runs from a range of time.
+
+.. code:: bash
+
+   databroker-pack CATALOG -q "TimeRange(since='2020')" DIRECTORY
+   databroker-pack CATALOG -q "TimeRange(since='2020', until='2020-03-01)" DIRECTORY
+
+Export Runs from a range of time with a certain plan_name.
+
+.. code:: bash
+
+   databroker-pack CATALOG -q "TimeRange(since='2020')" -q "{'plan_name': 'count'}" DIRECTORY
+
+Export a specific Run by its scan_id
+
+.. code:: bash
+
+   databroker-pack CATALOG -q "{'scan_id': 126360}" DIRECTORY
+
+Export specific Runs given by their Run Start UID (or the first several
+characters) entered at the command prompt...
+
+.. code:: bash
+
+   databroker-pack CATALOG --uids -
+   3c93c54e
+   47587fa8
+   ebad8c01
+   <Ctrl D>
+
+...or read from a file.
+
+.. code:: bash
+
+   databroker-pack CATALOG --uids uids_to_pack.txt
