@@ -51,7 +51,7 @@ def unpack(path, catalog_name):
     # directory, we need to make these paths absolute.
     for k, v in source["args"].get("root_map", {}).items():
         if not pathlib.Path(v).is_absolute():
-            source["args"]["root_map"][k] = str(path / v)
+            source["args"]["root_map"][k] = str(pathlib.Path(path, v))
 
     catalog["sources"][catalog_name] = source
     config_filename = f"databroker_unpack_{catalog_name}.yml"
