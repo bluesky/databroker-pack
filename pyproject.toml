@@ -1,0 +1,14 @@
+[tool.black]
+exclude = '''
+
+(
+  /(
+    | \.git
+    | build
+    | dist
+  )/
+  | databroker_pack/_version.py
+  | versioneer.py
+  | docs/source/conf.py
+)
+'''
