@@ -19,8 +19,6 @@ install:
   - pip install --upgrade numpy
   # Install this package and the packages listed in requirements.txt.
   - pip install .
-  # Needs an unreleased improvement to databroker
-  - pip install git+https://github.com/danielballan/databroker@support-relative-root-map  # TEMP BRANCH
   # Install extra requirements for running tests and building docs.
   - pip install -r requirements-dev.txt
 
