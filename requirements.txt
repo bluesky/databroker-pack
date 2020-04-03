@@ -3,3 +3,4 @@ event-model
 suitcase-jsonl
 suitcase-msgpack
 suitcase-utils
+tqdm
