@@ -56,6 +56,7 @@ def unpack(catalog_name, path):
     catalog["sources"][catalog_name] = source
     config_filename = f"databroker_unpack_{catalog_name}.yml"
     config_path = pathlib.Path(config_dir, config_filename)
+    os.makedirs(config_dir, exist_ok=True)
     with open(config_path, "xt") as file:
         yaml.dump(catalog, file)
     return config_path
