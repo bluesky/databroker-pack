@@ -1,4 +1,4 @@
-git+https://github.com/danielballan/databroker@support-relative-root-map  # TEMP BRANCH
+databroker
 event-model
 suitcase-jsonl
 suitcase-msgpack
