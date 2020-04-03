@@ -16,6 +16,7 @@ __all__ = (
     "export_uids",
     "export_catalog",
     "export_run",
+    "write_documents_manifest",
     "write_external_files_manifest",
     "write_jsonl_catalog_file",
     "write_msgpack_catalog_file",
@@ -74,12 +75,13 @@ def export_uids(
         Maps each "root" to a set of absolute file paths.
     """
     accumulated_files = collections.defaultdict(set)
+    accumulated_artifacts = collections.defaultdict(list)
     failures = []
     with tqdm(total=len(uids), position=1, desc="Writing Documents") as progress:
         for uid in uids:
             try:
                 run = source_catalog[uid]
-                files = export_run(
+                artifacts, files = export_run(
                     run,
                     directory,
                     external=external,
@@ -90,6 +92,9 @@ def export_uids(
                 )
                 for root, set_ in files.items():
                     accumulated_files[root].update(set_)
+                for name, list_ in artifacts.items():
+                    accumulated_artifacts[name].extend(list_)
+
             except Exception:
                 logger.exception("Error while exporting Run %r", uid)
                 if strict:
@@ -97,7 +102,7 @@ def export_uids(
                 failures.append(uid)
                 print("FAILED:", uid)
             progress.update()
-    return accumulated_files, failures
+    return dict(accumulated_artifacts), dict(accumulated_files), failures
 
 
 def export_catalog(
@@ -143,11 +148,12 @@ def export_catalog(
         Maps each "root" to a set of absolute file paths.
     """
     accumulated_files = collections.defaultdict(set)
+    accumulated_artifacts = collections.defaultdict(list)
     failures = []
     with tqdm(total=len(source_catalog), position=1) as progress:
         for uid, run in source_catalog.items():
             try:
-                files = export_run(
+                artifacts, files = export_run(
                     run,
                     directory,
                     external=external,
@@ -158,6 +164,8 @@ def export_catalog(
                 )
                 for root, set_ in files.items():
                     accumulated_files[root].update(set_)
+                for name, list_ in artifacts.items():
+                    accumulated_artifacts[name].extend(list_)
             except Exception:
                 logger.exception("Error while exporting Run %r", uid)
                 if strict:
@@ -165,7 +173,7 @@ def export_catalog(
                 failures.append(uid)
                 print("FAILED:", uid)
             progress.update()
-    return dict(accumulated_files), failures
+    return dict(accumulated_artifacts), dict(accumulated_files), failures
 
 
 def export_run(
@@ -233,7 +241,7 @@ def export_run(
             for resource in resources:
                 root = root_map.get(resource["root"], resource["root"])
                 files[root].update(run.get_file_list(resource))
-    return dict(files)
+    return serializer.artifacts, dict(files)
 
 
 def _root_hash(root):
@@ -377,3 +385,20 @@ def write_jsonl_catalog_file(manager, directory, paths, root_map):
     FILENAME = "catalog.yml"
     with manager.open("catalog_file", FILENAME, "xt") as file:
         yaml.dump(catalog, file)
+
+
+def write_documents_manifest(manager, directory, artifacts):
+    """
+    Wirte the paths to all the files of Documents relative to the pack directory.
+
+    Parameters
+    ----------
+    manager: suitcase Manager object
+    directory: Str
+        Pack directory
+    artifacts: List[Str]
+    """
+    FILENAME = "documents_manifest.txt"
+    with manager.open("documents_manifest", FILENAME, "xt") as file:
+        for artifact in artifacts:
+            file.write(f"{pathlib.Path(artifact).relative_to(directory)!s}\n")

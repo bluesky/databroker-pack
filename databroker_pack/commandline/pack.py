@@ -13,6 +13,7 @@ from .._pack import (
     copy_external_files,
     export_catalog,
     export_uids,
+    write_documents_manifest,
     write_jsonl_catalog_file,
     write_msgpack_catalog_file,
     write_external_files_manifest,
@@ -249,7 +250,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             if not results:
                 print(f"Query {combined_query} yielded no results. Exiting.")
                 sys.exit(1)
-            external_files, failures = export_catalog(
+            artifacts, external_files, failures = export_catalog(
                 results,
                 manager,
                 strict=args.strict,
@@ -270,7 +271,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             if not uids:
                 print("Found empty input for --uids. Exiting")
                 sys.exit(1)
-                external_files, failures = export_uids(
+                artifacts, external_files, failures = export_uids(
                     catalog,
                     uids,
                     manager,
@@ -285,6 +286,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 "Must specify which Runs to pack, --query ... or "
                 "--uids ... or --all."
             )
+        write_documents_manifest(manager, args.directory, artifacts["all"])
         root_map = {}
         if external is None:
             # When external is None, external data is neither being filled into
