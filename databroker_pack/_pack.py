@@ -263,7 +263,7 @@ def write_external_files_manifest(manager, root, files):
     root_hash = _root_hash(root)
     name = f"external_files_manifest_{root_hash}.txt"
     with manager.open("manifest", name, "xt") as file:
-        file.write("\n".join(sorted((str(f) for f in files))))
+        file.write("\n".join(sorted((str(f) for f in set(files)))))
 
 
 def copy_external_files(target_directory, root, files):
