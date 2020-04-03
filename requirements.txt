@@ -1,5 +1,6 @@
 databroker
 event-model
+intake >=0.5.5
 suitcase-jsonl
 suitcase-msgpack
 suitcase-utils
