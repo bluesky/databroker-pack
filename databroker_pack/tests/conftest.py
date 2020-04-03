@@ -19,7 +19,7 @@ def simple_catalog():
         # It is incomplete in databroker 1.0.0.
         # assert NAME in databroker.utils.list_configs()
         databroker.catalog.force_reload()
-        assert NAME in databroker.catalog
+        assert NAME in list(databroker.catalog)
         yield NAME
     finally:
         os.unlink(config_path)
