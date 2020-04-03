@@ -261,14 +261,7 @@ def write_external_files_manifest(manager, root, files):
     files: Iterable[Union[Str, Path]]
     """
     root_hash = _root_hash(root)
-    # The is the number of parts of the path that comprise the
-    # root, so that we can reconstruct which part of the paths in
-    # the file are the "root". (This information is available in
-    # other ways, so putting it here is just a convenience.)
-    # We subract one because we do not count '/'.
-    # So the root_index of '/tmp/weoifjew' is 2.
-    root_index = len(pathlib.Path(root).parts) - 1
-    name = f"external_files_manifest_{root_hash}_{root_index}.txt"
+    name = f"external_files_manifest_{root_hash}.txt"
     with manager.open("manifest", name, "xt") as file:
         file.write("\n".join(sorted((str(f) for f in files))))
 
