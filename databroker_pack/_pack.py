@@ -17,6 +17,7 @@ __all__ = (
     "export_catalog",
     "export_run",
     "write_external_files_manifest",
+    "write_jsonl_catalog_file",
     "write_msgpack_catalog_file",
 )
 logger = logging.getLogger(__name__)

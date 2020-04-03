@@ -2,8 +2,7 @@
 Usage
 =====
 
-Start by importing databroker-pack.
+There is a Python interface, but most users will find the commandline tool
+suitable for their needs.
 
-.. code-block:: python
-
-    import databroker_pack
+.. code-block:: bash
