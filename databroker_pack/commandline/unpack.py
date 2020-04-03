@@ -12,8 +12,8 @@ def main():
     )
     parser.register("action", "show_version", ShowVersionAction)
     parser.register("action", "list_catalogs", ListCatalogsAction)
-    parser.add_argument("name", type=str, help="Name of new catalog")
     parser.add_argument("path", type=str, help="Path to pack directory")
+    parser.add_argument("name", type=str, help="Name of new catalog")
     parser.add_argument(
         "--list-catalogs",
         action="list_catalogs",
@@ -28,7 +28,7 @@ def main():
         help="Show databroker_pack version and exit.",
     )
     args = parser.parse_args()
-    config_path = unpack(args.name, args.path)
+    config_path = unpack(args.path, args.name)
     print(f"Placed configuration file at {config_path!s}")
 
 

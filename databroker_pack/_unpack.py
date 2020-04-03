@@ -9,16 +9,16 @@ from ._utils import CatalogNameExists
 __all__ = ("unpack",)
 
 
-def unpack(catalog_name, path):
+def unpack(path, catalog_name):
     """
     Place a catalog configuration file in the user configuration area.
 
     Parameters
     ----------
-    catalog_name: Str
-        A unique name for the catalog
     path: Path
         Path to output from pack
+    catalog_name: Str
+        A unique name for the catalog
 
     Returns
     -------
