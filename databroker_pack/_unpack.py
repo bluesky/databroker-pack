@@ -38,9 +38,21 @@ def unpack(catalog_name, path):
     with open(source_catalog_file_path) as file:
         catalog = yaml.safe_load(file)
     source = catalog["sources"].pop("packed_catalog")
-    relative_paths = source["metadata"]["relative_paths"]
-    new_paths = [str(pathlib.Path(path, rel_path)) for rel_path in relative_paths]
-    source["args"]["paths"] = new_paths
+
+    # Handle temporary condition where 'pack' puts absolute paths in "args"
+    # and puts relative paths off to the side.
+    if any(pathlib.Path(p).is_absolute() for p in source["args"]["paths"]):
+        relative_paths = source["metadata"]["relative_paths"]
+        new_paths = [str(pathlib.Path(path, rel_path)) for rel_path in relative_paths]
+        source["args"]["paths"] = new_paths
+
+    # The root_map values may be relative inside a pack, given relative to the
+    # catalog file. Now that we are going to use a catalog file in a config
+    # directory, we need to make these paths absolute.
+    for k, v in source["args"].get("root_map", {}).items():
+        if not pathlib.Path(v).is_absolute():
+            source["args"]["root_map"][k] = str(path / v)
+
     catalog["sources"][catalog_name] = source
     config_filename = f"databroker_unpack_{catalog_name}.yml"
     config_path = pathlib.Path(config_dir, config_filename)

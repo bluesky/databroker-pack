@@ -20,7 +20,7 @@ import pytest
             "--all",
             "--fill-external",
             "--handler-registry",
-            "{'NPY_SEQ': 'ophyd.sim.NumpySeqHandler'",
+            "{'NPY_SEQ': 'ophyd.sim.NumpySeqHandler'}",
         ],
         # Repeat some of the above with JSONL instead of the default msgpack.
         # We could use a second layer of parametrize here but that seems more
@@ -37,7 +37,7 @@ import pytest
             "--all",
             "--fill-external",
             "--handler-registry",
-            "{'NPY_SEQ': 'ophyd.sim.NumpySeqHandler'",
+            "{'NPY_SEQ': 'ophyd.sim.NumpySeqHandler'}",
         ],
     ],
 )

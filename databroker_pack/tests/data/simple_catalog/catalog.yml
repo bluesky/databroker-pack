@@ -9,6 +9,6 @@ sources:
     metadata:
       generated_by:
         library: databroker_pack
-        version: 0.post17.dev0+g1dd2188
+        version: 0.post18.dev0+gacf549a
       relative_paths:
       - ./*.jsonl

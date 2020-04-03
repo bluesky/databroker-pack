@@ -85,6 +85,7 @@ def export_uids(
                     external=external,
                     dry_run=dry_run,
                     handler_registry=handler_registry,
+                    root_map=source_catalog.root_map,
                     serializer_class=serializer_class,
                 )
                 for root, set_ in files.items():
@@ -152,6 +153,7 @@ def export_catalog(
                     external=external,
                     dry_run=dry_run,
                     handler_registry=handler_registry,
+                    root_map=source_catalog.root_map,
                     serializer_class=serializer_class,
                 )
                 for root, set_ in files.items():
@@ -173,6 +175,7 @@ def export_run(
     external=None,
     dry_run=False,
     handler_registry=None,
+    root_map=None,
     serializer_class=None,
 ):
     """
@@ -208,11 +211,14 @@ def export_run(
         import suitcase.msgpack
 
         serializer_class = suitcase.msgpack.Serializer
+    root_map = root_map or {}
     resources = []
     files = collections.defaultdict(set)
     if handler_registry is None:
         handler_registry = databroker.core.discover_handlers()
-    with event_model.Filler(handler_registry, inplace=False) as filler:
+    with event_model.Filler(
+        handler_registry, inplace=False, root_map=root_map
+    ) as filler:
         with serializer_class(directory) as serializer:
             with tqdm(position=0) as progress:
                 for name, doc in run.canonical(fill="no"):
@@ -225,7 +231,8 @@ def export_run(
                     progress.update()
         if external is None:
             for resource in resources:
-                files[resource["root"]].update(run.get_file_list(resource))
+                root = root_map.get(resource["root"], resource["root"])
+                files[root].update(run.get_file_list(resource))
     return dict(files)
 
 

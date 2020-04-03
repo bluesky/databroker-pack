@@ -213,7 +213,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             handler_registry = ast.literal_eval(args.handler_registry)
         except Exception as exc:
             raise ValueError(
-                "Could not parse --handler-registry {args.handler_registry}. "
+                f"Could not parse --handler-registry {args.handler_registry}. "
                 "A dict of strings is expected."
             ) from exc
         handler_registry = databroker.core.parse_handler_registry(handler_registry)
@@ -235,7 +235,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 try:
                     query = dict(eval(raw_query, vars(databroker.queries)))
                 except Exception:
-                    raise ValueError("Could not parse query {raw_query}.")
+                    raise ValueError(f"Could not parse query {raw_query}.")
                 queries.append(query)
             combined_query = {"$and": queries}
             # HACK We need no_cursor_timeout only until databroker learns to

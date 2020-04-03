@@ -1,2 +1,5 @@
-databroker
+git+https://github.com/danielballan/databroker@support-relative-root-map  # TEMP BRANCH
+event-model
+suitcase-jsonl
 suitcase-msgpack
+suitcase-utils
