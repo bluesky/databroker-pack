@@ -302,6 +302,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         if not args.no_documents and artifacts.get("all"):
             write_documents_manifest(manager, args.directory, artifacts["all"])
         root_map = {}
+        copying_failures = []
         if external is None:
             # When external is None, external data is neither being filled into
             # the Documents (external == 'fill') nor ignored (external ==
@@ -310,9 +311,10 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             if args.copy_external:
                 target_drectory = pathlib.Path(args.directory, "external_files")
                 for root, files in external_files.items():
-                    new_root, new_files = copy_external_files(
+                    new_root, new_files, copying_failures_ = copy_external_files(
                         target_drectory, root, files, strict=args.strict
                     )
+                    copying_failures.extend(copying_failures_)
                     # Record the root relative to the pack directory.
                     relative_root = new_root.relative_to(args.directory)
                     root_map.update({root: relative_root})
@@ -337,6 +339,11 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             with tempfile.NamedTemporaryFile("w", delete=False) as file:
                 print(f"See {file.name} for a list of uids of Runs that failed.")
                 file.write("\n".join(failures))
+        if copying_failures:
+            with tempfile.NamedTemporaryFile("w", delete=False) as file:
+                print(f"See {file.name} for a list of files that failed to copy.")
+                file.write("\n".join(copying_failures))
+        if failures or copying_failures:
             print(f"See {error_logfile_name} for error logs with more information.")
             sys.exit(1)
     finally:

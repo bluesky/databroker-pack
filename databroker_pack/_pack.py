@@ -293,11 +293,12 @@ def copy_external_files(target_directory, root, files, strict=False):
 
     Returns
     -------
-    new_root, new_files
+    new_root, new_files, failures
     """
     root_hash = _root_hash(root)
     dest = str(pathlib.Path(target_directory, root_hash))
     new_files = []
+    failures = []
     for filename in tqdm(files, total=len(files), desc="Copying external files"):
         relative_path = pathlib.Path(filename).relative_to(root)
         new_root = target_directory / root_hash
@@ -309,7 +310,8 @@ def copy_external_files(target_directory, root, files, strict=False):
             logger.exception("Error while copying %r to %r", filename, dest)
             if strict:
                 raise
-    return new_root, new_files
+            failures.append(filename)
+    return new_root, new_files, failures
 
 
 def write_msgpack_catalog_file(manager, directory, paths, root_map):
