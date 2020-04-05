@@ -298,7 +298,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 target_drectory = pathlib.Path(args.directory, "external_files")
                 for root, files in external_files.items():
                     new_root, new_files = copy_external_files(
-                        target_drectory, root, files
+                        target_drectory, root, files, strict=args.strict
                     )
                     # Record the root relative to the pack directory.
                     relative_root = new_root.relative_to(args.directory)

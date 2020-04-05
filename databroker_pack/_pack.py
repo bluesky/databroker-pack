@@ -52,7 +52,7 @@ def export_uids(
         Where files containing documents will be written, or a Manager for
         writing to non-file buffers.
     strict: Bool, optional
-        By default, swallow erros and return a lits of them at the end.
+        By default, swallow erros and return a list of them at the end.
         Set to True to debug errors.
     external: {None, 'fill', 'ignore')
         If None, return the paths to external files.
@@ -125,7 +125,7 @@ def export_catalog(
         Where files containing documents will be written, or a Manager for
         writing to non-file buffers.
     strict: Bool, optional
-        By default, swallow erros and return a lits of them at the end.
+        By default, swallow erros and return a list of them at the end.
         Set to True to debug errors.
     external: {None, 'fill', 'ignore')
         If None, return the paths to external files.
@@ -266,7 +266,7 @@ def write_external_files_manifest(manager, root, files):
         file.write("\n".join(sorted((str(f) for f in set(files)))))
 
 
-def copy_external_files(target_directory, root, files):
+def copy_external_files(target_directory, root, files, strict=False):
     """
     Make a filesystem copy of the external files.
 
@@ -281,6 +281,9 @@ def copy_external_files(target_directory, root, files):
     target_directory: Union[Str, Path]
     root: Str
     files: Iterable[Str]
+    strict: Bool, optional
+        By default, swallow erros and return a list of them at the end.
+        Set to True to debug errors.
 
     Returns
     -------
@@ -293,8 +296,13 @@ def copy_external_files(target_directory, root, files):
         relative_path = pathlib.Path(filename).relative_to(root)
         new_root = target_directory / root_hash
         dest = new_root / relative_path
-        os.makedirs(dest.parent, exist_ok=True)
-        new_files.append(shutil.copy2(filename, dest))
+        try:
+            os.makedirs(dest.parent, exist_ok=True)
+            new_files.append(shutil.copy2(filename, dest))
+        except Exception:
+            logger.exception("Error while copying %r to %r", filename, dest)
+            if strict:
+                raise
     return new_root, new_files
 
 
