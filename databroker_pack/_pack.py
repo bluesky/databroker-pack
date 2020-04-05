@@ -301,7 +301,7 @@ def copy_external_files(target_directory, root, files, strict=False):
     failures = []
     for filename in tqdm(files, total=len(files), desc="Copying external files"):
         relative_path = pathlib.Path(filename).relative_to(root)
-        new_root = target_directory / root_hash
+        new_root = pathlib.Path(target_directory, root_hash)
         dest = new_root / relative_path
         try:
             os.makedirs(dest.parent, exist_ok=True)
