@@ -46,7 +46,7 @@ def main():
 
         n_rows = (ncats // ncols) + int(ncols % ncols > 0)
 
-        cols = [extant_catalogs[j * n_rows : (j + 1) * n_rows] for j in range(ncols)]
+        cols = [extant_catalogs[j * n_rows: (j + 1) * n_rows] for j in range(ncols)]
 
         nice_names = "\n".join(
             format_str.format(*g) for g in itertools.zip_longest(*cols, fillvalue="")
