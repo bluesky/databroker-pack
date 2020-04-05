@@ -2,6 +2,7 @@
 import argparse
 import functools
 import logging
+import os
 import pathlib
 import sys
 import tempfile
@@ -224,6 +225,18 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
     catalog = databroker.catalog[args.catalog]()
     manager = MultiFileManager(args.directory)
     try:
+        # We write the catalog file at the end because we need to collect
+        # information to write the root_map. We never overwrite existing files,
+        # so we will fail if catalog.yml exists already. In order to save time
+        # and fail early, check that the file exists.
+        catalog_file_path = pathlib.Path(args.directory, "catalog.yml")
+        if os.path.isfile(catalog_file_path):
+            print(
+                f"The file {catalog_file_path} exists. Specify an empty directory, or "
+                "a nonexistent one (which will be created by "
+                "databroker-pack)."
+            )
+            sys.exit(1)
         if args.query or args.all:
             if args.all:
                 # --all is an alias for --query "{}"
