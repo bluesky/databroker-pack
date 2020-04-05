@@ -100,7 +100,9 @@ def export_uids(
                 if strict:
                     raise
                 failures.append(uid)
-                print("FAILED:", uid)
+                progress.set_description(
+                    f"Writing Documents ({len(failures)} failures)", refresh=False
+                )
             progress.update()
     return dict(accumulated_artifacts), dict(accumulated_files), failures
 
@@ -150,7 +152,9 @@ def export_catalog(
     accumulated_files = collections.defaultdict(set)
     accumulated_artifacts = collections.defaultdict(list)
     failures = []
-    with tqdm(total=len(source_catalog), position=1) as progress:
+    with tqdm(
+        total=len(source_catalog), position=1, desc="Writing Documents"
+    ) as progress:
         for uid, run in source_catalog.items():
             try:
                 artifacts, files = export_run(
@@ -171,7 +175,9 @@ def export_catalog(
                 if strict:
                     raise
                 failures.append(uid)
-                print("FAILED:", uid)
+                progress.set_description(
+                    f"Writing Documents ({len(failures)} failures)", refresh=False
+                )
             progress.update()
     return dict(accumulated_artifacts), dict(accumulated_files), failures
 
