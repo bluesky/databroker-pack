@@ -299,7 +299,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 "Must specify which Runs to pack, --query ... or "
                 "--uids ... or --all."
             )
-        if not args.no_documents:
+        if not args.no_documents and artifacts.get("all"):
             write_documents_manifest(manager, args.directory, artifacts["all"])
         root_map = {}
         if external is None:
