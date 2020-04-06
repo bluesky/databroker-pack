@@ -221,7 +221,18 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         handler_registry = databroker.core.parse_handler_registry(handler_registry)
     else:
         handler_registry = None
-
+    # The MultiFileManager would create this directory for us on demand (when
+    # we open the first file), but let's create it early so we can check
+    # permissions.
+    try:
+        os.makedirs(args.directory, exist_ok=True)
+    except Exception as exc:
+        print(f"Could not create directory at {args.directory}.")
+        print(f"Error: {exc!r}")
+        sys.exit(1)
+    if not os.access(args.directory, os.W_OK):
+        print(f"Directory at {args.directory} is not writable.")
+        sys.exit(1)
     catalog = databroker.catalog[args.catalog]()
     manager = MultiFileManager(args.directory)
     try:
