@@ -2,6 +2,7 @@
 import argparse
 import functools
 import logging
+import os
 import pathlib
 import sys
 import tempfile
@@ -220,10 +221,33 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         handler_registry = databroker.core.parse_handler_registry(handler_registry)
     else:
         handler_registry = None
-
+    # The MultiFileManager would create this directory for us on demand (when
+    # we open the first file), but let's create it early so we can check
+    # permissions.
+    try:
+        os.makedirs(args.directory, exist_ok=True)
+    except Exception as exc:
+        print(f"Could not create directory at {args.directory}.")
+        print(f"Error: {exc!r}")
+        sys.exit(1)
+    if not os.access(args.directory, os.W_OK):
+        print(f"Directory at {args.directory} is not writable.")
+        sys.exit(1)
     catalog = databroker.catalog[args.catalog]()
     manager = MultiFileManager(args.directory)
     try:
+        # We write the catalog file at the end because we need to collect
+        # information to write the root_map. We never overwrite existing files,
+        # so we will fail if catalog.yml exists already. In order to save time
+        # and fail early, check that the file exists.
+        catalog_file_path = pathlib.Path(args.directory, "catalog.yml")
+        if os.path.isfile(catalog_file_path):
+            print(
+                f"The file {catalog_file_path} exists. Specify an empty directory, or "
+                "a nonexistent one (which will be created by "
+                f"{os.path.basename(sys.argv[0])})."
+            )
+            sys.exit(1)
         if args.query or args.all:
             if args.all:
                 # --all is an alias for --query "{}"
@@ -286,9 +310,10 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 "Must specify which Runs to pack, --query ... or "
                 "--uids ... or --all."
             )
-        if not args.no_documents:
+        if not args.no_documents and artifacts.get("all"):
             write_documents_manifest(manager, args.directory, artifacts["all"])
         root_map = {}
+        copying_failures = []
         if external is None:
             # When external is None, external data is neither being filled into
             # the Documents (external == 'fill') nor ignored (external ==
@@ -297,9 +322,10 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             if args.copy_external:
                 target_drectory = pathlib.Path(args.directory, "external_files")
                 for root, files in external_files.items():
-                    new_root, new_files = copy_external_files(
-                        target_drectory, root, files
+                    new_root, new_files, copying_failures_ = copy_external_files(
+                        target_drectory, root, files, strict=args.strict
                     )
+                    copying_failures.extend(copying_failures_)
                     # Record the root relative to the pack directory.
                     relative_root = new_root.relative_to(args.directory)
                     root_map.update({root: relative_root})
@@ -324,6 +350,11 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             with tempfile.NamedTemporaryFile("w", delete=False) as file:
                 print(f"See {file.name} for a list of uids of Runs that failed.")
                 file.write("\n".join(failures))
+        if copying_failures:
+            with tempfile.NamedTemporaryFile("w", delete=False) as file:
+                print(f"See {file.name} for a list of files that failed to copy.")
+                file.write("\n".join(copying_failures))
+        if failures or copying_failures:
             print(f"See {error_logfile_name} for error logs with more information.")
             sys.exit(1)
     finally:

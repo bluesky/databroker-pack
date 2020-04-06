@@ -52,7 +52,7 @@ def export_uids(
         Where files containing documents will be written, or a Manager for
         writing to non-file buffers.
     strict: Bool, optional
-        By default, swallow erros and return a lits of them at the end.
+        By default, swallow erros and return a list of them at the end.
         Set to True to debug errors.
     external: {None, 'fill', 'ignore')
         If None, return the paths to external files.
@@ -100,7 +100,9 @@ def export_uids(
                 if strict:
                     raise
                 failures.append(uid)
-                print("FAILED:", uid)
+                progress.set_description(
+                    f"Writing Documents ({len(failures)} failures)", refresh=False
+                )
             progress.update()
     return dict(accumulated_artifacts), dict(accumulated_files), failures
 
@@ -125,7 +127,7 @@ def export_catalog(
         Where files containing documents will be written, or a Manager for
         writing to non-file buffers.
     strict: Bool, optional
-        By default, swallow erros and return a lits of them at the end.
+        By default, swallow erros and return a list of them at the end.
         Set to True to debug errors.
     external: {None, 'fill', 'ignore')
         If None, return the paths to external files.
@@ -150,7 +152,9 @@ def export_catalog(
     accumulated_files = collections.defaultdict(set)
     accumulated_artifacts = collections.defaultdict(list)
     failures = []
-    with tqdm(total=len(source_catalog), position=1) as progress:
+    with tqdm(
+        total=len(source_catalog), position=1, desc="Writing Documents"
+    ) as progress:
         for uid, run in source_catalog.items():
             try:
                 artifacts, files = export_run(
@@ -171,7 +175,9 @@ def export_catalog(
                 if strict:
                     raise
                 failures.append(uid)
-                print("FAILED:", uid)
+                progress.set_description(
+                    f"Writing Documents ({len(failures)} failures)", refresh=False
+                )
             progress.update()
     return dict(accumulated_artifacts), dict(accumulated_files), failures
 
@@ -266,7 +272,7 @@ def write_external_files_manifest(manager, root, files):
         file.write("\n".join(sorted((str(f) for f in set(files)))))
 
 
-def copy_external_files(target_directory, root, files):
+def copy_external_files(target_directory, root, files, strict=False):
     """
     Make a filesystem copy of the external files.
 
@@ -281,21 +287,31 @@ def copy_external_files(target_directory, root, files):
     target_directory: Union[Str, Path]
     root: Str
     files: Iterable[Str]
+    strict: Bool, optional
+        By default, swallow erros and return a list of them at the end.
+        Set to True to debug errors.
 
     Returns
     -------
-    new_root, new_files
+    new_root, new_files, failures
     """
     root_hash = _root_hash(root)
     dest = str(pathlib.Path(target_directory, root_hash))
     new_files = []
+    failures = []
     for filename in tqdm(files, total=len(files), desc="Copying external files"):
         relative_path = pathlib.Path(filename).relative_to(root)
-        new_root = target_directory / root_hash
+        new_root = pathlib.Path(target_directory, root_hash)
         dest = new_root / relative_path
-        os.makedirs(dest.parent, exist_ok=True)
-        new_files.append(shutil.copy2(filename, dest))
-    return new_root, new_files
+        try:
+            os.makedirs(dest.parent, exist_ok=True)
+            new_files.append(shutil.copy2(filename, dest))
+        except Exception:
+            logger.exception("Error while copying %r to %r", filename, dest)
+            if strict:
+                raise
+            failures.append(filename)
+    return new_root, new_files, failures
 
 
 def write_msgpack_catalog_file(manager, directory, paths, root_map):
