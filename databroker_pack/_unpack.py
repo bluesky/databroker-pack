@@ -30,7 +30,7 @@ def unpack(path, catalog_name):
         raise ValueError(f"{path} is not a directory")
     source_catalog_file_path = pathlib.Path(path, "catalog.yml")
     if not os.path.isfile(source_catalog_file_path):
-        raise ValueError(f"Cold not find 'catalog.yml' in {path}")
+        raise ValueError(f"Could not find 'catalog.yml' in {path}")
     if catalog_name in databroker.catalog:
         raise CatalogNameExists(catalog_name)
 

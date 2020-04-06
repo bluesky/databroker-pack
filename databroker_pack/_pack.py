@@ -13,6 +13,7 @@ import yaml
 from ._version import get_versions
 
 __all__ = (
+    "copy_external_files",
     "export_uids",
     "export_catalog",
     "export_run",
