@@ -409,6 +409,7 @@ def write_documents_manifest(manager, directory, artifacts):
     artifacts: List[Str]
     """
     FILENAME = "documents_manifest.txt"
+    abs_directory = pathlib.Path(directory).absolute()
     with manager.open("documents_manifest", FILENAME, "xt") as file:
         for artifact in artifacts:
-            file.write(f"{pathlib.Path(artifact).relative_to(directory)!s}\n")
+            file.write(f"{pathlib.Path(artifact).relative_to(abs_directory)!s}\n")
