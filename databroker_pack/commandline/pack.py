@@ -234,7 +234,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             print(
                 f"The file {catalog_file_path} exists. Specify an empty directory, or "
                 "a nonexistent one (which will be created by "
-                "databroker-pack)."
+                f"{os.path.basename(sys.argv[0])})."
             )
             sys.exit(1)
         if args.query or args.all:
