@@ -1,7 +1,7 @@
 import os
 import pathlib
 
-import databroker.utils
+import databroker
 import yaml
 
 from ._utils import CatalogNameExists
@@ -31,7 +31,7 @@ def unpack(path, catalog_name):
     source_catalog_file_path = pathlib.Path(path, "catalog.yml")
     if not os.path.isfile(source_catalog_file_path):
         raise ValueError(f"Cold not find 'catalog.yml' in {path}")
-    if catalog_name in databroker.utils.list_configs():
+    if catalog_name in databroker.catalog:
         raise CatalogNameExists(catalog_name)
 
     config_dir = databroker.catalog_search_path()[0]
