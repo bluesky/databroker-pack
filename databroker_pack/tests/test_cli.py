@@ -1,3 +1,4 @@
+import pathlib
 import subprocess
 import sys
 
@@ -41,18 +42,29 @@ import pytest
         ],
     ],
 )
-def test_pack_smoke(cli_args, simple_catalog, tmpdir):
+@pytest.mark.parametrize(
+    "relative_target_directory", [True, False])
+def test_pack_smoke(cli_args, simple_catalog, tmpdir, relative_target_directory):
     "Smoke test common options."
     TIMEOUT = 10
-    DIRECTORY = tmpdir
     CATALOG = simple_catalog
-    p = subprocess.Popen(
-        [sys.executable, "-um", "databroker_pack.commandline.pack"]
-        + [CATALOG, DIRECTORY]
-        + cli_args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    if relative_target_directory:
+        p = subprocess.Popen(
+            [sys.executable, "-um", "databroker_pack.commandline.pack"]
+            + [CATALOG, pathlib.Path(tmpdir).parts[-1]]
+            + cli_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=str(pathlib.Path(tmpdir).parent)
+        )
+    else:
+        p = subprocess.Popen(
+            [sys.executable, "-um", "databroker_pack.commandline.pack"]
+            + [CATALOG, tmpdir]
+            + cli_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
     # Capture stdout, stderr for interactive debugging.
     stdout, stderr = p.communicate(TIMEOUT)
     assert p.returncode == 0
