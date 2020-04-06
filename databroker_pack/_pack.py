@@ -281,7 +281,7 @@ def copy_external_files(target_directory, root, files, strict=False):
     external_file_manifest_*.txt files to feed other file transfer mechanisms,
     such as rsync or globus.
 
-    This is a wrapper around shutil.copy2.
+    This is a wrapper around shutil.copyfile.
 
     Parameters
     ----------
@@ -306,7 +306,7 @@ def copy_external_files(target_directory, root, files, strict=False):
         dest = new_root / relative_path
         try:
             os.makedirs(dest.parent, exist_ok=True)
-            new_files.append(shutil.copy2(filename, dest))
+            new_files.append(shutil.copyfile(filename, dest))
         except Exception:
             logger.exception("Error while copying %r to %r", filename, dest)
             if strict:
