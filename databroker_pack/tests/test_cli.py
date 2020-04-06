@@ -42,8 +42,7 @@ import pytest
         ],
     ],
 )
-@pytest.mark.parametrize(
-    "relative_target_directory", [True, False])
+@pytest.mark.parametrize("relative_target_directory", [True, False])
 def test_pack_smoke(cli_args, simple_catalog, tmpdir, relative_target_directory):
     "Smoke test common options."
     TIMEOUT = 10
@@ -55,7 +54,7 @@ def test_pack_smoke(cli_args, simple_catalog, tmpdir, relative_target_directory)
             + cli_args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            cwd=str(pathlib.Path(tmpdir).parent)
+            cwd=str(pathlib.Path(tmpdir).parent),
         )
     else:
         p = subprocess.Popen(
