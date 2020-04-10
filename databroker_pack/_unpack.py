@@ -41,9 +41,11 @@ def unpack(path, catalog_name):
 
     # Handle temporary condition where 'pack' puts absolute paths in "args"
     # and puts relative paths off to the side.
-    if any(pathlib.Path(p).is_absolute() for p in source["args"]["paths"]):
-        relative_paths = source["metadata"]["relative_paths"]
-        new_paths = [str(pathlib.Path(path, rel_path)) for rel_path in relative_paths]
+    relative_paths = source.get("metadata", {}).get("relative_paths")
+    if relative_paths:
+        new_paths = [
+            str(pathlib.Path(path, rel_path).absolute()) for rel_path in relative_paths
+        ]
         source["args"]["paths"] = new_paths
 
     # The root_map values may be relative inside a pack, given relative to the
