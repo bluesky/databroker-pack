@@ -110,7 +110,7 @@ Then the newly "unpacked" catalog (e.g. ``my_data``) will show in
 
 .. code:: bash
 
-   databroker --list-catalogs
+   databroker-pack --list-catalogs
 
 and can be accessed like
 
