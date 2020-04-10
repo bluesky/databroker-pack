@@ -49,18 +49,28 @@ def test_pack_smoke(cli_args, simple_catalog, tmpdir, relative_target_directory)
     CATALOG = simple_catalog
     if relative_target_directory:
         p = subprocess.Popen(
-            [sys.executable, "-um", "databroker_pack.commandline.pack"]
-            + [CATALOG, pathlib.Path(tmpdir).parts[-1]]
-            + cli_args,
+            [
+                sys.executable,
+                "-um",
+                "databroker_pack.commandline.pack",
+                CATALOG,
+                pathlib.Path(tmpdir).parts[-1],
+                *cli_args,
+            ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=str(pathlib.Path(tmpdir).parent),
         )
     else:
         p = subprocess.Popen(
-            [sys.executable, "-um", "databroker_pack.commandline.pack"]
-            + [CATALOG, tmpdir]
-            + cli_args,
+            [
+                sys.executable,
+                "-um",
+                "databroker_pack.commandline.pack",
+                CATALOG,
+                tmpdir,
+                *cli_args,
+            ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
