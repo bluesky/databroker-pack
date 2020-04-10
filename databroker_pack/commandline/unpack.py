@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import sys
-from .._unpack import unpack
+from .._unpack import unpack_inplace
 from ._utils import ListCatalogsAction, ShowVersionAction
 from .._utils import CatalogNameExists
 
@@ -13,6 +13,12 @@ def main():
     )
     parser.register("action", "show_version", ShowVersionAction)
     parser.register("action", "list_catalogs", ListCatalogsAction)
+    parser.add_argument(
+        "how",
+        type=str,
+        choices=("inplace", "mongo_normalized"),
+        help="Read Documents in place (from files) or load them into a database.",
+    )
     parser.add_argument("path", type=str, help="Path to pack directory")
     parser.add_argument("name", type=str, help="Name of new catalog")
     parser.add_argument(
@@ -30,7 +36,11 @@ def main():
     )
     args = parser.parse_args()
     try:
-        config_path = unpack(args.path, args.name)
+        if args.how == "inplace":
+            config_path = unpack_inplace(args.path, args.name)
+        elif args.how == "mongo_normalized":
+            raise NotImplementedError
+        # We rely on argparse to ensure that args.how is one of the above.
     except CatalogNameExists:
         import databroker
         import itertools

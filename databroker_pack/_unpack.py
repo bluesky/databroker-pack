@@ -6,10 +6,10 @@ import yaml
 
 from ._utils import CatalogNameExists
 
-__all__ = ("unpack",)
+__all__ = ("unpack_inplace",)
 
 
-def unpack(path, catalog_name):
+def unpack_inplace(path, catalog_name):
     """
     Place a catalog configuration file in the user configuration area.
 
