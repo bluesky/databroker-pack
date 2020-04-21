@@ -85,7 +85,7 @@ def export_uids(
       relevant tracebacks are logged.)
     """
     accumulated_files = collections.defaultdict(set)
-    accumulated_artifacts = collections.defaultdict(list)
+    accumulated_artifacts = collections.defaultdict(set)
     failures = []
     with tqdm(total=len(uids), position=1, desc="Writing Documents") as progress:
         for uid in uids:
@@ -103,7 +103,7 @@ def export_uids(
                 for root, set_ in files.items():
                     accumulated_files[root].update(set_)
                 for name, list_ in artifacts.items():
-                    accumulated_artifacts[name].extend(list_)
+                    accumulated_artifacts[name].update(list_)
 
             except Exception:
                 logger.exception("Error while exporting Run %r", uid)
@@ -169,7 +169,7 @@ def export_catalog(
       relevant tracebacks are logged.)
     """
     accumulated_files = collections.defaultdict(set)
-    accumulated_artifacts = collections.defaultdict(list)
+    accumulated_artifacts = collections.defaultdict(set)
     failures = []
     with tqdm(
         total=len(source_catalog), position=1, desc="Writing Documents"
@@ -188,7 +188,7 @@ def export_catalog(
                 for root, set_ in files.items():
                     accumulated_files[root].update(set_)
                 for name, list_ in artifacts.items():
-                    accumulated_artifacts[name].extend(list_)
+                    accumulated_artifacts[name].update(list_)
             except Exception:
                 logger.exception("Error while exporting Run %r", uid)
                 if strict:
