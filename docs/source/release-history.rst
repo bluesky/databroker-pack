@@ -2,6 +2,15 @@
 Release History
 ===============
 
+v0.1.4 (2020-04-20)
+-------------------
+
+Fixed
++++++
+
+* Allow directory given to :func:`~databroker_pack.unpack` to be relative.
+* Fix bug that made :func:`~databroker_pack.unpack` unusable on Windows.
+
 v0.1.3 (2020-04-06)
 -------------------
 
