@@ -72,8 +72,17 @@ def export_uids(
 
     Returns
     -------
-    files: Dict[Str, Set[Str]]
-        Maps each "root" to a set of absolute file paths.
+    artifacts, files, failures
+
+    Notes
+    -----
+    * ``artifacts`` maps a human-readable string (typically just ``'all'`` in
+      this case) to a list of buffers or filepaths where the documents were
+      serialized.
+    * ``files`` is the set of filepaths of all external files referenced by
+      Resource documents.
+    * ``failures`` is a list of uids of runs that raised Exceptions. (The
+      relevant tracebacks are logged.)
     """
     accumulated_files = collections.defaultdict(set)
     accumulated_artifacts = collections.defaultdict(list)
@@ -147,8 +156,17 @@ def export_catalog(
 
     Returns
     -------
-    files: Dict[Str, Set[Str]]
-        Maps each "root" to a set of absolute file paths.
+    artifacts, files, failures
+
+    Notes
+    -----
+    * ``artifacts`` maps a human-readable string (typically just ``'all'`` in
+      this case) to a list of buffers or filepaths where the documents were
+      serialized.
+    * ``files`` is the set of filepaths of all external files referenced by
+      Resource documents.
+    * ``failures`` is a list of uids of runs that raised Exceptions. (The
+      relevant tracebacks are logged.)
     """
     accumulated_files = collections.defaultdict(set)
     accumulated_artifacts = collections.defaultdict(list)
@@ -219,8 +237,15 @@ def export_run(
 
     Returns
     -------
-    files: Dict[Str, Set[Str]]
-        Maps each "root" to a set of absolute file paths.
+    artifacts, files
+
+    Notes
+    -----
+    * ``artifacts`` maps a human-readable string (typically just ``'all'`` in
+      this case) to a list of buffers or filepaths where the documents were
+      serialized.
+    * ``files`` is the set of filepaths of all external files referenced by
+      Resource documents.
     """
     if serializer_class is None:
         import suitcase.msgpack
@@ -295,6 +320,13 @@ def copy_external_files(target_directory, root, files, strict=False):
     Returns
     -------
     new_root, new_files, failures
+
+    Notes
+    -----
+    * ``new_root`` is a Path to the new root directory
+    * ``new_files`` is the list of filepaths to the files that were created.
+    * ``failures`` is a list of uids of runs that raised Exceptions. (The
+      relevant tracebacks are logged.)
     """
     root_hash = _root_hash(root)
     dest = str(pathlib.Path(target_directory, root_hash))
