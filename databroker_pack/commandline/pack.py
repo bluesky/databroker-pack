@@ -339,10 +339,10 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                     root_map.update({root: root})
                     write_external_files_manifest(manager, root, files)
         if args.format == "jsonl":
-            paths = ["./*.jsonl"]
+            paths = ["./documents/*.jsonl"]
             write_jsonl_catalog_file(manager, args.directory, paths, root_map)
         elif args.format == "msgpack":
-            paths = ["./*.msgpack"]
+            paths = ["./documents/*.msgpack"]
             write_msgpack_catalog_file(manager, args.directory, paths, root_map)
         # No need for an else here; we validated that it is one of these above.
         if failures:

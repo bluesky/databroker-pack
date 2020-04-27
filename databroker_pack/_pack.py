@@ -234,7 +234,9 @@ def export_run(
     with event_model.Filler(
         handler_registry, inplace=False, root_map=root_map
     ) as filler:
-        with serializer_class(directory) as serializer:
+        with serializer_class(
+            directory, file_prefix="documents/{start[uid]}"
+        ) as serializer:
             with tqdm(position=0) as progress:
                 for name, doc in run.canonical(fill="no"):
                     if name == "resource":

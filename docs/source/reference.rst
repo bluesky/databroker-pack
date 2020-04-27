@@ -27,7 +27,8 @@ techniques, and instruments.
 That said, it is sometimes necessary to take a look under the hood. The pack
 directory always contains:
 
-* Either msgpack (binary) or JSONL (plaintext) files containing the Bluesky
+* A directory named ``documents`` containing either msgpack (binary) or JSONL
+  (plaintext) files containing the Bluesky
   `Documents <https://blueskyproject.io/event-model/data-model.html>`_.
 * Text manifests listing the names of these files relative to the directory
   root. The manifests maybe split over multiple files named like
