@@ -1,4 +1,5 @@
 import collections
+import hashlib
 from pathlib import Path
 import subprocess
 
@@ -133,6 +134,27 @@ class PipeStringToCat(PipeToCat):
 class PipeBytesToCat(PipeToCat):
     def write(self, b):
         return self._process.stdin.write(b)
+
+
+def root_hash(salt, root):
+    """
+    Generate a deterministic hash for a given salt and root.
+
+    Parameters
+    ----------
+    salt: bytes
+    root: Union[string, Path]
+
+    Examples
+    --------
+
+    Generate a salt and hash a root (string or Path).
+
+    >>> import secrets
+    >>> salt = secrets.token_hex(32).encode()
+    >>> root_hash(salt, root)
+    """
+    return hashlib.md5(str(root).encode() + salt).hexdigest()
 
 
 class CatalogNameExists(ValueError):

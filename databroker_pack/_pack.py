@@ -4,6 +4,7 @@ import logging
 import os
 import pathlib
 import shutil
+import uuid
 
 import event_model
 import databroker.core
@@ -276,12 +277,6 @@ def export_run(
                 root = root_map.get(resource["root"], resource["root"])
                 files[root].update(run.get_file_list(resource))
     return serializer.artifacts, dict(files)
-
-
-def _root_hash(root):
-    # This is just a unique ID to give the manifest file for each
-    # root a unique name. It is not a cryptographic hash.
-    return hashlib.md5(root.encode()).hexdigest()
 
 
 def write_external_files_manifest(manager, root, files):
