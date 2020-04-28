@@ -9,7 +9,7 @@ from ._utils import CatalogNameExists
 __all__ = ("unpack_inplace",)
 
 
-def unpack_inplace(path, catalog_name):
+def unpack_inplace(path, catalog_name, merge=False):
     """
     Place a catalog configuration file in the user configuration area.
 
@@ -19,6 +19,8 @@ def unpack_inplace(path, catalog_name):
         Path to output from pack
     catalog_name: Str
         A unique name for the catalog
+    merge: Boolean
+        Unpack into an existing catalog
 
     Returns
     -------
@@ -31,7 +33,8 @@ def unpack_inplace(path, catalog_name):
     source_catalog_file_path = pathlib.Path(path, "catalog.yml")
     if not os.path.isfile(source_catalog_file_path):
         raise ValueError(f"Could not find 'catalog.yml' in {path}")
-    if catalog_name in databroker.catalog:
+    exists = catalog_name in databroker.catalog
+    if exists and not merge:
         raise CatalogNameExists(catalog_name)
 
     config_dir = databroker.catalog_search_path()[0]
