@@ -1,3 +1,0 @@
-external_files/8c16589573582bf61abd8fd72919a557/f48217_0.npy
-external_files/8c16589573582bf61abd8fd72919a557/f48217_1.npy
-external_files/8c16589573582bf61abd8fd72919a557/f48217_2.npy
