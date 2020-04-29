@@ -40,7 +40,7 @@ def unpack_inplace(path, catalog_name, merge=False):
     if exists:
         if not merge:
             raise CatalogNameExists(catalog_name)
-        if not os.path.isfile(dest_catalog_file_name):
+        if not os.path.isfile(dest_catalog_file_path):
             raise ValueError(
                 "The catalog exists but not in the user-writable location. "
                 "Pick a different catalog name."
@@ -108,6 +108,6 @@ def unpack_inplace(path, catalog_name, merge=False):
 
     catalog["sources"][catalog_name] = source
     os.makedirs(config_dir, exist_ok=True)
-    with open(dest_catalog_file_path, "xt") as file:
+    with open(dest_catalog_file_path, "w") as file:
         yaml.dump(catalog, file)
     return dest_catalog_file_path

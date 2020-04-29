@@ -22,6 +22,9 @@ def main():
     parser.add_argument("path", type=str, help="Path to pack directory")
     parser.add_argument("name", type=str, help="Name of new catalog")
     parser.add_argument(
+        "--no-merge",
+        action="store_true")
+    parser.add_argument(
         "--list-catalogs",
         action="list_catalogs",
         default=argparse.SUPPRESS,
@@ -37,7 +40,7 @@ def main():
     args = parser.parse_args()
     try:
         if args.how == "inplace":
-            config_path = unpack_inplace(args.path, args.name)
+            config_path = unpack_inplace(args.path, args.name, merge=not args.no_merge)
         elif args.how == "mongo_normalized":
             raise NotImplementedError
         # We rely on argparse to ensure that args.how is one of the above.
