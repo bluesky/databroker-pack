@@ -3,7 +3,7 @@ import pathlib
 
 import pytest
 
-from .._pack import copy_external_files, _root_hash
+from .._pack import copy_external_files
 
 
 def test_strict_copy_external_files(tmpdir):
@@ -15,20 +15,21 @@ def test_strict_copy_external_files(tmpdir):
         file.write("placeholder")
 
     # Test a successful copy.
+    unique_id = "placeholder_unique_id"
     _, _, failures = copy_external_files(
-        target_directory, root, [pathlib.Path(root, "testfile")], strict=True
+        target_directory, root, unique_id, [pathlib.Path(root, "testfile")], strict=True
     )
     assert not failures
-    with open(pathlib.Path(target_directory, _root_hash(root), "testfile")) as file:
+    with open(pathlib.Path(target_directory, unique_id, "testfile")) as file:
         assert file.read() == "placeholder"
 
     # Test failures with and without strict.
-    nonexistant_file = pathlib.Path(root, _root_hash(root), "DOES_NOT_EXIST")
+    nonexistant_file = pathlib.Path(root, unique_id, "DOES_NOT_EXIST")
     with pytest.raises(FileNotFoundError):
         copy_external_files(
-            target_directory, root, [nonexistant_file], strict=True,
+            target_directory, root, unique_id, [nonexistant_file], strict=True,
         )
     _, _, failures = copy_external_files(
-        target_directory, root, [nonexistant_file], strict=False,
+        target_directory, root, unique_id, [nonexistant_file], strict=False,
     )
     assert failures == [nonexistant_file]

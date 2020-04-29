@@ -1,16 +1,17 @@
 import collections
-import hashlib
+import functools
 import logging
 import os
 import pathlib
+import secrets
 import shutil
-import uuid
 
 import event_model
 import databroker.core
 from tqdm import tqdm
 import yaml
 
+from ._utils import root_hash
 from ._version import get_versions
 
 __all__ = (
@@ -81,13 +82,15 @@ def export_uids(
       this case) to a list of buffers or filepaths where the documents were
       serialized.
     * ``files`` is the set of filepaths of all external files referenced by
-      Resource documents.
+      Resource documents, keyed on ``(root, unique_id)``.
     * ``failures`` is a list of uids of runs that raised Exceptions. (The
       relevant tracebacks are logged.)
     """
     accumulated_files = collections.defaultdict(set)
     accumulated_artifacts = collections.defaultdict(set)
     failures = []
+    salt = secrets.token_hex(32).encode()
+    root_hash_func = functools.partial(root_hash, salt)
     with tqdm(total=len(uids), position=1, desc="Writing Documents") as progress:
         for uid in uids:
             try:
@@ -95,6 +98,7 @@ def export_uids(
                 artifacts, files = export_run(
                     run,
                     directory,
+                    root_hash_func,
                     external=external,
                     dry_run=dry_run,
                     handler_registry=handler_registry,
@@ -165,13 +169,15 @@ def export_catalog(
       this case) to a list of buffers or filepaths where the documents were
       serialized.
     * ``files`` is the set of filepaths of all external files referenced by
-      Resource documents.
+      Resource documents, keyed on ``(root, unique_id)``.
     * ``failures`` is a list of uids of runs that raised Exceptions. (The
       relevant tracebacks are logged.)
     """
     accumulated_files = collections.defaultdict(set)
     accumulated_artifacts = collections.defaultdict(set)
     failures = []
+    salt = secrets.token_hex(32).encode()
+    root_hash_func = functools.partial(root_hash, salt)
     with tqdm(
         total=len(source_catalog), position=1, desc="Writing Documents"
     ) as progress:
@@ -180,6 +186,7 @@ def export_catalog(
                 artifacts, files = export_run(
                     run,
                     directory,
+                    root_hash_func,
                     external=external,
                     dry_run=dry_run,
                     handler_registry=handler_registry,
@@ -205,6 +212,7 @@ def export_catalog(
 def export_run(
     run,
     directory,
+    root_hash_func,
     *,
     external=None,
     dry_run=False,
@@ -246,14 +254,14 @@ def export_run(
       this case) to a list of buffers or filepaths where the documents were
       serialized.
     * ``files`` is the set of filepaths of all external files referenced by
-      Resource documents.
+      Resource documents, keyed on ``(root, unique_id)``.
     """
+    EXTERNAL_RELATED_DOCS = ("resource", "datum", "datum_page")
     if serializer_class is None:
         import suitcase.msgpack
 
         serializer_class = suitcase.msgpack.Serializer
     root_map = root_map or {}
-    resources = []
     files = collections.defaultdict(set)
     if handler_registry is None:
         handler_registry = databroker.core.discover_handlers()
@@ -265,37 +273,48 @@ def export_run(
         ) as serializer:
             with tqdm(position=0) as progress:
                 for name, doc in run.canonical(fill="no"):
-                    if name == "resource":
-                        resources.append(doc)
                     if external == "fill":
                         name, doc = filler(name, doc)
+                        # Omit Resource and Datum[Page] because the data was
+                        # filled in place.
+                        if name in EXTERNAL_RELATED_DOCS:
+                            progress.update()
+                            continue
+                    elif name == "resource":
+                        root = root_map.get(doc["root"], doc["root"])
+                        unique_id = root_hash_func(doc["root"])
+                        if external is None:
+                            resource = doc.copy()
+                            resource["root"] = root
+                            files[(root, unique_id)].update(run.get_file_list(resource))
+                        # Replace root with a unique ID before serialization.
+                        # We are overriding the local variable name doc here
+                        # (yuck!) so that serializer(name, doc) below works on
+                        # all document types.
+                        doc = doc.copy()
+                        doc["root"] = unique_id
                     if not dry_run:
                         serializer(name, doc)
                     progress.update()
-        if external is None:
-            for resource in resources:
-                root = root_map.get(resource["root"], resource["root"])
-                files[root].update(run.get_file_list(resource))
     return serializer.artifacts, dict(files)
 
 
-def write_external_files_manifest(manager, root, files):
+def write_external_files_manifest(manager, unique_id, files):
     """
     Write a manifest of external files.
 
     Parameters
     ----------
     manager: suitcase Manager object
-    root: Str
+    unique_id: Str
     files: Iterable[Union[Str, Path]]
     """
-    root_hash = _root_hash(root)
-    name = f"external_files_manifest_{root_hash}.txt"
+    name = f"external_files_manifest_{unique_id}.txt"
     with manager.open("manifest", name, "xt") as file:
         file.write("\n".join(sorted((str(f) for f in set(files)))))
 
 
-def copy_external_files(target_directory, root, files, strict=False):
+def copy_external_files(target_directory, root, unique_id, files, strict=False):
     """
     Make a filesystem copy of the external files.
 
@@ -325,13 +344,12 @@ def copy_external_files(target_directory, root, files, strict=False):
     * ``failures`` is a list of uids of runs that raised Exceptions. (The
       relevant tracebacks are logged.)
     """
-    root_hash = _root_hash(root)
-    dest = str(pathlib.Path(target_directory, root_hash))
+    dest = str(pathlib.Path(target_directory, unique_id))
     new_files = []
     failures = []
     for filename in tqdm(files, total=len(files), desc="Copying external files"):
         relative_path = pathlib.Path(filename).relative_to(root)
-        new_root = pathlib.Path(target_directory, root_hash)
+        new_root = pathlib.Path(target_directory, unique_id)
         dest = new_root / relative_path
         try:
             os.makedirs(dest.parent, exist_ok=True)
