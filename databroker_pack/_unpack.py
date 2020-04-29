@@ -43,7 +43,8 @@ def unpack_inplace(path, catalog_name, merge=False):
         if not os.path.isfile(dest_catalog_file_name):
             raise ValueError(
                 "The catalog exists but not in the user-writable location. "
-                "Pick a different catalog name.")
+                "Pick a different catalog name."
+            )
         with open(dest_catalog_file_path) as file:
             existing_catalog = yaml.safe_load(file)
         existing_source = existing_catalog["sources"][catalog_name]
@@ -62,7 +63,8 @@ def unpack_inplace(path, catalog_name, merge=False):
         if existing_source_driver != source_driver:
             raise ValueError(
                 f"Cannot merge source with driver {source_driver} into source "
-                f"with driver {existing_source_driver}")
+                f"with driver {existing_source_driver}"
+            )
 
     # Handle temporary condition where 'pack' puts absolute paths in "args"
     # and puts relative paths off to the side.
@@ -81,8 +83,8 @@ def unpack_inplace(path, catalog_name, merge=False):
         if "metadata" not in source:
             source["metadata"] = {}
         source["metadata"]["relative_paths"] = sorted(
-            set(source["metadata"].get("relative_paths", [])) |
-            set(existing_source.get("metadata", {}).get("relative_paths", []))
+            set(source["metadata"].get("relative_paths", []))
+            | set(existing_source.get("metadata", {}).get("relative_paths", []))
         )
 
     # The root_map values may be relative inside a pack, given relative to the
@@ -95,14 +97,14 @@ def unpack_inplace(path, catalog_name, merge=False):
     # Merge root_map from existing source, if applicable.
     if existing_source is not None:
         collisions = set(source["args"].get("root_map", {})).intersection(
-            set(existing_source["args"].get("root_map", {})))
+            set(existing_source["args"].get("root_map", {}))
+        )
         if collisions:
             raise ValueError(
                 "root_map between existing source and new source have "
-                f"colliding keys {collisions}")
-        source["args"]["root_map"].update(
-            existing_source["args"].get("root_map", {})
-        )
+                f"colliding keys {collisions}"
+            )
+        source["args"]["root_map"].update(existing_source["args"].get("root_map", {}))
 
     catalog["sources"][catalog_name] = source
     os.makedirs(config_dir, exist_ok=True)
