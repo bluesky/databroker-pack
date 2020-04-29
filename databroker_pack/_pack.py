@@ -89,6 +89,12 @@ def export_uids(
     accumulated_files = collections.defaultdict(set)
     accumulated_artifacts = collections.defaultdict(set)
     failures = []
+    # We want a hash that is unique to:
+    # - a root
+    # - a given batch of exported runs (i.e. a given call to this function)
+    # so that we can use it as a key in root_map which is guaranteed not to
+    # collide with keys from other batches. Thus, we create a "salt" here.
+    # This does not need to be cryptographically secure, just unique.
     salt = secrets.token_hex(32).encode()
     root_hash_func = functools.partial(root_hash, salt)
     with tqdm(total=len(uids), position=1, desc="Writing Documents") as progress:
@@ -176,6 +182,12 @@ def export_catalog(
     accumulated_files = collections.defaultdict(set)
     accumulated_artifacts = collections.defaultdict(set)
     failures = []
+    # We want a hash that is unique to:
+    # - a root
+    # - a given batch of exported runs (i.e. a given call to this function)
+    # so that we can use it as a key in root_map which is guaranteed not to
+    # collide with keys from other batches. Thus, we create a "salt" here.
+    # This does not need to be cryptographically secure, just unique.
     salt = secrets.token_hex(32).encode()
     root_hash_func = functools.partial(root_hash, salt)
     with tqdm(
