@@ -366,7 +366,6 @@ def copy_external_files(target_directory, root, unique_id, files, strict=False):
     * ``failures`` is a list of uids of runs that raised Exceptions. (The
       relevant tracebacks are logged.)
     """
-    dest = str(pathlib.Path(target_directory, unique_id))
     new_files = []
     failures = []
     for filename in tqdm(files, total=len(files), desc="Copying external files"):
