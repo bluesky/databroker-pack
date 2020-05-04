@@ -153,6 +153,14 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         "--no-documents", action="store_true", help="Do not pack the Documents.",
     )
     other_group.add_argument(
+        "--limit",
+        type=int,
+        help=(
+            "Stop after exporting some number of Runs. Useful for testing a "
+            "subset before doing a lengthy export."
+        ),
+    )
+    other_group.add_argument(
         "--strict",
         action="store_true",
         help=(
@@ -282,6 +290,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 dry_run=args.no_documents,
                 handler_registry=handler_registry,
                 serializer_class=serializer_class,
+                limit=args.limit,
             )
         elif args.uids:
             # Skip blank lines and commented lines.
@@ -297,7 +306,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 sys.exit(1)
                 artifacts, external_files, failures = export_uids(
                     catalog,
-                    uids,
+                    uids[:args.limit],
                     manager,
                     strict=args.strict,
                     external=external,

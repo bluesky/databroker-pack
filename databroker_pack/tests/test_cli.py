@@ -14,6 +14,7 @@ import pytest
         ["--query", "{}"],
         ["--all", "--no-documents"],
         ["--all", "--strict"],
+        ["--all", "--limit", "1"],
         ["--all", "--ignore-external"],
         ["--all", "--copy-external"],
         ["--all", "--fill-external"],

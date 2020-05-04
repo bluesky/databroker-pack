@@ -137,6 +137,7 @@ def export_catalog(
     dry_run=False,
     handler_registry=None,
     serializer_class=None,
+    limit=None,
 ):
     """
     Export all the Runs from a Catalog.
@@ -164,6 +165,9 @@ def export_catalog(
         currently ``suitcase.msgpack.Serializer``, but this may change in the
         future. If you want ``suitcase.msgpack.Serializer`` specifically, pass
         it in explicitly.
+    limit: Union[Integer, None]
+        Stop after exporting some number of Runs. Useful for testing a subset
+        before doing a lengthy export.
 
     Returns
     -------
@@ -179,6 +183,10 @@ def export_catalog(
     * ``failures`` is a list of uids of runs that raised Exceptions. (The
       relevant tracebacks are logged.)
     """
+    if limit is not None:
+        if limit < 1:
+            raise ValueError("limit must be None or a number 1 or greater")
+        limit = int(limit)
     accumulated_files = collections.defaultdict(set)
     accumulated_artifacts = collections.defaultdict(set)
     failures = []
@@ -191,9 +199,11 @@ def export_catalog(
     salt = secrets.token_hex(32).encode()
     root_hash_func = functools.partial(root_hash, salt)
     with tqdm(
-        total=len(source_catalog), position=1, desc="Writing Documents"
+        total=limit or len(source_catalog), position=1, desc="Writing Documents"
     ) as progress:
-        for uid, run in source_catalog.items():
+        for i, (uid, run) in enumerate(source_catalog.items()):
+            if i == limit:
+                break
             try:
                 artifacts, files = export_run(
                     run,
