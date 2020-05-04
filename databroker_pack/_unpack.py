@@ -205,14 +205,13 @@ def unpack_mongo_normalized(path, uri, catalog_name, merge=False):
     # directory, we need to make these paths absolute.
     for k, v in source["args"].get("root_map", {}).items():
         if not pathlib.Path(v).is_absolute():
-           source["args"]["root_map"][k] = str(pathlib.Path(path, v).absolute())
+            source["args"]["root_map"][k] = str(pathlib.Path(path, v).absolute())
 
     # Copy data into MongoDB.
     catalog_class = intake.registry[source["driver"]]
     source_catalog = catalog_class(**source["args"])
     serializer = suitcase.mongo_normalized.Serializer(
-        metadatastore_db=database,
-        asset_registry_db=database,
+        metadatastore_db=database, asset_registry_db=database,
     )
     with tqdm(
         total=len(source_catalog), desc="Copying Documents into MongoDB"
