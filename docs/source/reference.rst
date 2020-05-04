@@ -8,7 +8,8 @@ Python API
 .. autofunction:: databroker_pack.export_uids
 .. autofunction:: databroker_pack.export_run
 .. autofunction:: databroker_pack.copy_external_files
-.. autofunction:: databroker_pack.unpack
+.. autofunction:: databroker_pack.unpack_inplace
+.. autofunction:: databroker_pack.unpack_mongo_normalized
 .. autofunction:: databroker_pack.write_documents_manifest
 .. autofunction:: databroker_pack.write_external_files_manifest
 .. autofunction:: databroker_pack.write_jsonl_catalog_file

@@ -9,7 +9,7 @@ import yaml
 
 from ._utils import CatalogNameExists
 
-__all__ = ("unpack_inplace",)
+__all__ = ("unpack_inplace", "unpack_mongo_normalized")
 
 
 def unpack_inplace(path, catalog_name, merge=False):
@@ -124,6 +124,9 @@ def unpack_mongo_normalized(path, uri, catalog_name, merge=False):
     ----------
     path: Path
         Path to output from pack
+    uri: Str
+        MongoDB URI. Must include a database name. Example:
+        ``mongodb://localhost:27017/databroker_unpack_my_catalog``
     catalog_name: Str
         A unique name for the catalog
     merge: Boolean, optional
