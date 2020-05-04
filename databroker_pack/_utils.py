@@ -135,6 +135,12 @@ class PipeToCat:
         self._process.stdin.close()
         self._process.wait()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_details):
+        self.close()
+
 
 class PipeStringToCat(PipeToCat):
     def write(self, s):
