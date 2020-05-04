@@ -20,6 +20,12 @@ class SSHManager:
         self._directory = Path(directory)
         self.buffers = {}  # maps postfixes to buffer objects
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_details):
+        self.close()
+
     @property
     def artifacts(self):
         return dict(self._artifacts)
