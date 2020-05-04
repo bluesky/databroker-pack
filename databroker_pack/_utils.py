@@ -108,7 +108,7 @@ class PipeToCat:
         self._host = host
         self._path = path
         # Ensure directory exists.
-        subprocess.run("ssh", host, ["mkdir", "-p", os.path.dirname(path)])
+        subprocess.run("ssh", host, ["mkdir", "-p", str(Path(path).parent)])
         self._process = subprocess.Popen(
             ["ssh", host, f"cat > {path}"],
             stdin=subprocess.PIPE,
