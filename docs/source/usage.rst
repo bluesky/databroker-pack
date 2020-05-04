@@ -102,7 +102,7 @@ There are two ways to do this:
   MongoDB, and point databroker at MongoDB.
 
 Option 1: Unpacking "in place"
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+++++++++++++++++++++++++++++++
 
 Use ``databroker-unpack`` to make ``DIRECTORY`` automatically discoverable by
 databroker. You must specify a ``NAME`` to give the catalog.
@@ -125,7 +125,7 @@ For example
 It is important not to move the directory after you do this.
 
 Option 2: Unpacking into MongoDB
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+++++++++++++++++++++++++++++++++
 
 .. note::
 
