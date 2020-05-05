@@ -181,16 +181,16 @@ def unpack_mongo_normalized(path, uri, catalog_name, merge=False):
                 f"Existing catalog has driver {existing_source_driver} "
                 "so we cannot make a MongoDB-backed catalog with that name."
             )
-        if existing_source_driver["args"]["metadatastore_uri"] != uri:
+        if existing_source["args"]["metadatastore_db"] != uri:
             raise ValueError(
-                "Existing catalog has metadatastore_uri "
-                f"{existing_source_driver['args']['metadatastore_uri']} "
+                "Existing catalog has metadatastore_db"
+                f"{existing_source['args']['metadatastore_db']} "
                 r"which does not match requested uri {uri}."
             )
-        if existing_source_driver["args"]["asset_registry_uri"] != uri:
+        if existing_source["args"]["asset_registry_db"] != uri:
             raise ValueError(
-                "Existing catalog has asset_registry_uri "
-                f"{existing_source_driver['args']['asset_registry_uri']} "
+                "Existing catalog has asset_registry_db"
+                f"{existing_source['args']['asset_registry_db']} "
                 r"which does not match requested uri {uri}."
             )
 
