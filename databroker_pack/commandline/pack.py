@@ -304,16 +304,16 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             if not uids:
                 print("Found empty input for --uids. Exiting")
                 sys.exit(1)
-                artifacts, external_files, failures = export_uids(
-                    catalog,
-                    uids[:args.limit],
-                    manager,
-                    strict=args.strict,
-                    external=external,
-                    dry_run=args.no_documents,
-                    handler_registry=handler_registry,
-                    serializer_class=serializer_class,
-                )
+            artifacts, external_files, failures = export_uids(
+                catalog,
+                uids[:args.limit],
+                manager,
+                strict=args.strict,
+                external=external,
+                dry_run=args.no_documents,
+                handler_registry=handler_registry,
+                serializer_class=serializer_class,
+            )
         else:
             parser.error(
                 "Must specify which Runs to pack, --query ... or "
