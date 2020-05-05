@@ -176,7 +176,7 @@ def unpack_mongo_normalized(path, uri, catalog_name, merge=False):
     # Check that the target catalog is the right driver and URIs.
     if existing_source is not None:
         existing_source_driver = existing_source.get("driver")
-        if existing_source_driver != "bluesky-mongo-normalized":
+        if existing_source_driver != "bluesky-mongo-normalized-catalog":
             raise ValueError(
                 f"Existing catalog has driver {existing_source_driver} "
                 "so we cannot make a MongoDB-backed catalog with that name."
