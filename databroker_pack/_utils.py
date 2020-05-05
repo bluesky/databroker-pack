@@ -1,4 +1,5 @@
 import collections
+import hashlib
 from pathlib import Path
 import subprocess
 
@@ -18,6 +19,12 @@ class SSHManager:
         self._host = host
         self._directory = Path(directory)
         self.buffers = {}  # maps postfixes to buffer objects
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_details):
+        self.close()
 
     @property
     def artifacts(self):
@@ -106,6 +113,10 @@ class PipeToCat:
     def __init__(self, host, path):
         self._host = host
         self._path = path
+        # Ensure directory exists.
+        subprocess.run(
+            ["ssh", host, "mkdir", "-p", str(Path(path).parent)], capture_output=True
+        )
         self._process = subprocess.Popen(
             ["ssh", host, f"cat > {path}"],
             stdin=subprocess.PIPE,
@@ -124,6 +135,12 @@ class PipeToCat:
         self._process.stdin.close()
         self._process.wait()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_details):
+        self.close()
+
 
 class PipeStringToCat(PipeToCat):
     def write(self, s):
@@ -133,6 +150,27 @@ class PipeStringToCat(PipeToCat):
 class PipeBytesToCat(PipeToCat):
     def write(self, b):
         return self._process.stdin.write(b)
+
+
+def root_hash(salt, root):
+    """
+    Generate a deterministic hash for a given salt and root.
+
+    Parameters
+    ----------
+    salt: bytes
+    root: Union[string, Path]
+
+    Examples
+    --------
+
+    Generate a salt and hash a root (string or Path).
+
+    >>> import secrets
+    >>> salt = secrets.token_hex(32).encode()
+    >>> root_hash(salt, root)
+    """
+    return hashlib.md5(str(root).encode() + salt).hexdigest()
 
 
 class CatalogNameExists(ValueError):

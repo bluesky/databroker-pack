@@ -153,6 +153,14 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         "--no-documents", action="store_true", help="Do not pack the Documents.",
     )
     other_group.add_argument(
+        "--limit",
+        type=int,
+        help=(
+            "Stop after exporting some number of Runs. Useful for testing a "
+            "subset before doing a lengthy export."
+        ),
+    )
+    other_group.add_argument(
         "--strict",
         action="store_true",
         help=(
@@ -282,6 +290,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 dry_run=args.no_documents,
                 handler_registry=handler_registry,
                 serializer_class=serializer_class,
+                limit=args.limit,
             )
         elif args.uids:
             # Skip blank lines and commented lines.
@@ -295,16 +304,16 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             if not uids:
                 print("Found empty input for --uids. Exiting")
                 sys.exit(1)
-                artifacts, external_files, failures = export_uids(
-                    catalog,
-                    uids,
-                    manager,
-                    strict=args.strict,
-                    external=external,
-                    dry_run=args.no_documents,
-                    handler_registry=handler_registry,
-                    serializer_class=serializer_class,
-                )
+            artifacts, external_files, failures = export_uids(
+                catalog,
+                uids[:args.limit],
+                manager,
+                strict=args.strict,
+                external=external,
+                dry_run=args.no_documents,
+                handler_registry=handler_registry,
+                serializer_class=serializer_class,
+            )
         else:
             parser.error(
                 "Must specify which Runs to pack, --query ... or "
@@ -321,23 +330,22 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             # reference its location.
             if args.copy_external:
                 target_drectory = pathlib.Path(args.directory, "external_files")
-                for root, files in external_files.items():
+                for (root, unique_id), files in external_files.items():
                     new_root, new_files, copying_failures_ = copy_external_files(
-                        target_drectory, root, files, strict=args.strict
+                        target_drectory, root, unique_id, files, strict=args.strict
                     )
                     copying_failures.extend(copying_failures_)
                     # Record the root relative to the pack directory.
                     relative_root = new_root.relative_to(args.directory)
-                    root_map.update({root: relative_root})
+                    root_map.update({unique_id: relative_root})
                     rel_paths = [
                         pathlib.Path(f).relative_to(args.directory) for f in new_files
                     ]
-                    write_external_files_manifest(manager, root, rel_paths)
+                    write_external_files_manifest(manager, unique_id, rel_paths)
             else:
-                for root, files in external_files.items():
-                    # Make root_map an identity map.
-                    root_map.update({root: root})
-                    write_external_files_manifest(manager, root, files)
+                for (root, unique_id), files in external_files.items():
+                    root_map.update({unique_id: root})
+                    write_external_files_manifest(manager, unique_id, files)
         if args.format == "jsonl":
             paths = ["./documents/*.jsonl"]
             write_jsonl_catalog_file(manager, args.directory, paths, root_map)

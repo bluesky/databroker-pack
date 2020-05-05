@@ -2,13 +2,13 @@ sources:
   packed_catalog:
     args:
       paths:
-      - /home/dallan/Repos/bnl/databroker-pack/databroker_pack/tests/data/simple_catalog/*.jsonl
+      - /home/dallan/Repos/bnl/databroker-pack/databroker_pack/tests/data/simple_catalog/documents/*.msgpack
       root_map:
-        /tmp/tmpp5_kcw9q: external_files/8c16589573582bf61abd8fd72919a557
-    driver: bluesky-jsonl-catalog
+        f8483b80395561ac779a5425da6646ca: external_files/f8483b80395561ac779a5425da6646ca
+    driver: bluesky-msgpack-catalog
     metadata:
       generated_by:
         library: databroker_pack
-        version: 0.post18.dev0+gacf549a
+        version: 0.1.4.post13.dev0+g0e655dc
       relative_paths:
-      - ./*.jsonl
+      - ./documents/*.msgpack

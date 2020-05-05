@@ -1,0 +1,14 @@
+sources:
+  packed_catalog:
+    args:
+      paths:
+      - /home/dallan/Repos/bnl/databroker-pack/databroker_pack/tests/data/another_simple_catalog/documents/*.msgpack
+      root_map:
+        6dd0c365fe571bb2a00c63e1623fa298: external_files/6dd0c365fe571bb2a00c63e1623fa298
+    driver: bluesky-msgpack-catalog
+    metadata:
+      generated_by:
+        library: databroker_pack
+        version: 0.1.4.post14+gf7fce64
+      relative_paths:
+      - ./documents/*.msgpack
