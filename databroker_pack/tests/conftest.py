@@ -1,19 +1,20 @@
 import os
-import pathlib
+from pathlib import PurePath
+from pkg_resources import resource_filename
 
 import databroker
 import pytest
 
-from .. import unpack_inplace
+from databroker_pack._unpack import unpack_inplace
 
-DATA_DIR = pathlib.Path(__file__).parent / "data"
+DATA_DIR = PurePath(resource_filename('databroker_pack', 'tests/data'))
 
 
 @pytest.fixture(scope="module")
 def simple_catalog():
     DIRECTORY = "simple_catalog"
     NAME = "databroker_pack_tests_simple_catalog"
-    config_path = unpack_inplace(DATA_DIR / DIRECTORY, NAME)
+    config_path = unpack_inplace(str(DATA_DIR.joinpath(DIRECTORY)), NAME)
     try:
         # Use this once list_configs() is fixed to be complete.
         # It is incomplete in databroker 1.0.0.
