@@ -178,6 +178,12 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         ),
     )
     other_group.add_argument(
+        "--salt",
+        help=(
+            "Set this to override the random default with a fixed value."
+        ),
+    )
+    other_group.add_argument(
         "-V",
         "--version",
         action="show_version",
@@ -290,6 +296,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 dry_run=args.no_documents,
                 handler_registry=handler_registry,
                 serializer_class=serializer_class,
+                salt=args.salt.encode(),
                 limit=args.limit,
             )
         elif args.uids:
@@ -313,6 +320,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 dry_run=args.no_documents,
                 handler_registry=handler_registry,
                 serializer_class=serializer_class,
+                salt=args.salt.encode(),
             )
         else:
             parser.error(

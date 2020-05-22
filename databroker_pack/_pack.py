@@ -42,6 +42,7 @@ def export_uids(
     dry_run=False,
     handler_registry=None,
     serializer_class=None,
+    salt=None,
 ):
     """
     Export Runs from a Catalog, given a list of RunStart unique IDs.
@@ -71,6 +72,16 @@ def export_uids(
         currently ``suitcase.msgpack.Serializer``, but this may change in the
         future. If you want ``suitcase.msgpack.Serializer`` specifically, pass
         it in explicitly.
+    salt: Union[bytes, None]
+        We want to make hashes is unique to:
+
+        - a root
+        - a given batch of exported runs (i.e., a given call to this function)
+
+        so that we can use it as a key in root_map which is guaranteed not to
+        collide with keys from other batches. Thus, we create a "salt" unless
+        one is specified here. This does not need to be cryptographically
+        secure, just unique.
 
     Returns
     -------
@@ -89,13 +100,8 @@ def export_uids(
     accumulated_files = collections.defaultdict(set)
     accumulated_artifacts = collections.defaultdict(set)
     failures = []
-    # We want a hash that is unique to:
-    # - a root
-    # - a given batch of exported runs (i.e. a given call to this function)
-    # so that we can use it as a key in root_map which is guaranteed not to
-    # collide with keys from other batches. Thus, we create a "salt" here.
-    # This does not need to be cryptographically secure, just unique.
-    salt = secrets.token_hex(32).encode()
+    if salt is None:
+        salt = secrets.token_hex(32).encode()
     root_hash_func = functools.partial(root_hash, salt)
     with tqdm(total=len(uids), position=1, desc="Writing Documents") as progress:
         for uid in uids:
@@ -137,6 +143,7 @@ def export_catalog(
     dry_run=False,
     handler_registry=None,
     serializer_class=None,
+    salt=None,
     limit=None,
 ):
     """
@@ -165,6 +172,16 @@ def export_catalog(
         currently ``suitcase.msgpack.Serializer``, but this may change in the
         future. If you want ``suitcase.msgpack.Serializer`` specifically, pass
         it in explicitly.
+    salt: Union[bytes, None]
+        We want to make hashes is unique to:
+
+        - a root
+        - a given batch of exported runs (i.e., a given call to this function)
+
+        so that we can use it as a key in root_map which is guaranteed not to
+        collide with keys from other batches. Thus, we create a "salt" unless
+        one is specified here. This does not need to be cryptographically
+        secure, just unique.
     limit: Union[Integer, None]
         Stop after exporting some number of Runs. Useful for testing a subset
         before doing a lengthy export.
@@ -190,13 +207,8 @@ def export_catalog(
     accumulated_files = collections.defaultdict(set)
     accumulated_artifacts = collections.defaultdict(set)
     failures = []
-    # We want a hash that is unique to:
-    # - a root
-    # - a given batch of exported runs (i.e. a given call to this function)
-    # so that we can use it as a key in root_map which is guaranteed not to
-    # collide with keys from other batches. Thus, we create a "salt" here.
-    # This does not need to be cryptographically secure, just unique.
-    salt = secrets.token_hex(32).encode()
+    if salt is None:
+        salt = secrets.token_hex(32).encode()
     root_hash_func = functools.partial(root_hash, salt)
     with tqdm(
         total=limit or len(source_catalog), position=1, desc="Writing Documents"
