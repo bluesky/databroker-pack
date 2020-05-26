@@ -93,7 +93,7 @@ def export_uids(
       this case) to a list of buffers or filepaths where the documents were
       serialized.
     * ``files`` is the set of filepaths of all external files referenced by
-      Resource documents, keyed on ``(root, unique_id)``.
+      Resource documents, keyed on ``(root_in_document, root, unique_id)``.
     * ``failures`` is a list of uids of runs that raised Exceptions. (The
       relevant tracebacks are logged.)
     """
@@ -196,7 +196,7 @@ def export_catalog(
       this case) to a list of buffers or filepaths where the documents were
       serialized.
     * ``files`` is the set of filepaths of all external files referenced by
-      Resource documents, keyed on ``(root, unique_id)``.
+      Resource documents, keyed on ``(root_in_document, root, unique_id)``.
     * ``failures`` is a list of uids of runs that raised Exceptions. (The
       relevant tracebacks are logged.)
     """
@@ -288,7 +288,7 @@ def export_run(
       this case) to a list of buffers or filepaths where the documents were
       serialized.
     * ``files`` is the set of filepaths of all external files referenced by
-      Resource documents, keyed on ``(root, unique_id)``.
+      Resource documents, keyed on ``(root_in_document, root, unique_id)``.
     """
     EXTERNAL_RELATED_DOCS = ("resource", "datum", "datum_page")
     if serializer_class is None:
@@ -318,15 +318,29 @@ def export_run(
                         root = root_map.get(doc["root"], doc["root"])
                         unique_id = root_hash_func(doc["root"])
                         if external is None:
-                            resource = doc.copy()
-                            resource["root"] = root
-                            files[(root, unique_id)].update(run.get_file_list(resource))
-                        # Replace root with a unique ID before serialization.
-                        # We are overriding the local variable name doc here
-                        # (yuck!) so that serializer(name, doc) below works on
-                        # all document types.
-                        doc = doc.copy()
-                        doc["root"] = unique_id
+                            if dry_run:
+                                root_in_document = resource["root"]
+                            else:
+                                root_in_document = root
+                            # - root_in_document is the 'root' actually in the
+                            # resource_document
+                            # - root may be different depending on the
+                            # source_catalog configuration, which can map the
+                            # recorded 'root' in the document to some other
+                            # location. This is where we should go looking for
+                            # the data if we plan to copy it.
+                            # - unique_id is unique to this (root, salt)
+                            # combination and used to place the data in a
+                            # unique location.
+                            key = (root_in_document, root, unique_id)
+                            files[key].update(run.get_file_list(resource))
+                        if not dry_run:
+                            # Replace root with a unique ID before serialization.
+                            # We are overriding the local variable name doc here
+                            # (yuck!) so that serializer(name, doc) below works on
+                            # all document types.
+                            doc = doc.copy()
+                            doc["root"] = unique_id
                     if not dry_run:
                         serializer(name, doc)
                     progress.update()

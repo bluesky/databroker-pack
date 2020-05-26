@@ -339,21 +339,37 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             # reference its location.
             if args.copy_external:
                 target_drectory = pathlib.Path(args.directory, "external_files")
-                for (root, unique_id), files in external_files.items():
+                for (root_in_document, root, unique_id), files in external_files.items():
                     new_root, new_files, copying_failures_ = copy_external_files(
                         target_drectory, root, unique_id, files, strict=args.strict
                     )
                     copying_failures.extend(copying_failures_)
                     # Record the root relative to the pack directory.
                     relative_root = new_root.relative_to(args.directory)
-                    root_map.update({unique_id: relative_root})
+                    if not args.no_documents:
+                        # When we are exporting documents, we rewrite the
+                        # Resource to ensure no collisions of roots in
+                        # root_map.
+                        root_map.update({unique_id: relative_root})
+                    else:
+                        # If we are not exporting documents, the root_map has
+                        # to refer to the root as it is.
+                        root_map.update({root_in_document: relative_root})
                     rel_paths = [
                         pathlib.Path(f).relative_to(args.directory) for f in new_files
                     ]
                     write_external_files_manifest(manager, unique_id, rel_paths)
             else:
-                for (root, unique_id), files in external_files.items():
-                    root_map.update({unique_id: root})
+                for (root_in_document, root, unique_id), files in external_files.items():
+                    if not args.no_documents:
+                        # When we are exporting documents, we rewrite the
+                        # Resource to ensure no collisions of roots in
+                        # root_map.
+                        root_map.update({unique_id: root})
+                    else:
+                        # If we are not exporting documents, the root_map has
+                        # to refer to the root as it is.
+                        root_map.update({root_in_document: root})
                     write_external_files_manifest(manager, unique_id, files)
         if args.format == "jsonl":
             paths = ["./documents/*.jsonl"]
