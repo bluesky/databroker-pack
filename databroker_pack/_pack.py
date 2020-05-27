@@ -39,7 +39,7 @@ def export_uids(
     *,
     strict=False,
     external=None,
-    dry_run=False,
+    no_documents=False,
     handler_registry=None,
     serializer_class=None,
     salt=None,
@@ -62,7 +62,7 @@ def export_uids(
         If None, return the paths to external files.
         If 'fill', fill the external data into the Documents.
         If 'ignore', do not locate external files.
-    dry_run: Bool, optional
+    no_documents: Bool, optional
         If True, do not write any files. False by default.
     handler_registry: Union[Dict, None]
         If None, automatic handler discovery is used.
@@ -112,7 +112,7 @@ def export_uids(
                     directory,
                     root_hash_func,
                     external=external,
-                    dry_run=dry_run,
+                    no_documents=no_documents,
                     handler_registry=handler_registry,
                     root_map=source_catalog.root_map,
                     serializer_class=serializer_class,
@@ -140,7 +140,7 @@ def export_catalog(
     *,
     strict=False,
     external=None,
-    dry_run=False,
+    no_documents=False,
     handler_registry=None,
     serializer_class=None,
     salt=None,
@@ -162,7 +162,7 @@ def export_catalog(
         If None, return the paths to external files.
         If 'fill', fill the external data into the Documents.
         If 'ignore', do not locate external files.
-    dry_run: Bool, optional
+    no_documents: Bool, optional
         If True, do not write any files. False by default.
     handler_registry: Union[Dict, None]
         If None, automatic handler discovery is used.
@@ -222,7 +222,7 @@ def export_catalog(
                     directory,
                     root_hash_func,
                     external=external,
-                    dry_run=dry_run,
+                    no_documents=no_documents,
                     handler_registry=handler_registry,
                     root_map=source_catalog.root_map,
                     serializer_class=serializer_class,
@@ -249,7 +249,7 @@ def export_run(
     root_hash_func,
     *,
     external=None,
-    dry_run=False,
+    no_documents=False,
     handler_registry=None,
     root_map=None,
     serializer_class=None,
@@ -267,7 +267,7 @@ def export_run(
         If None, return the paths to external files.
         If 'fill', fill the external data into the Documents.
         If 'ignore', do not locate external files.
-    dry_run: Bool, optional
+    no_documents: Bool, optional
         If True, do not write any files. False by default.
     handler_registry: Union[Dict, None]
         If None, automatic handler discovery is used.
@@ -318,7 +318,7 @@ def export_run(
                         root = root_map.get(doc["root"], doc["root"])
                         unique_id = root_hash_func(doc["root"])
                         if external is None:
-                            if dry_run:
+                            if no_documents:
                                 root_in_document = doc["root"]
                             else:
                                 root_in_document = root
@@ -334,14 +334,14 @@ def export_run(
                             # unique location.
                             key = (root_in_document, root, unique_id)
                             files[key].update(run.get_file_list(doc))
-                        if not dry_run:
+                        if not no_documents:
                             # Replace root with a unique ID before serialization.
                             # We are overriding the local variable name doc here
                             # (yuck!) so that serializer(name, doc) below works on
                             # all document types.
                             doc = doc.copy()
                             doc["root"] = unique_id
-                    if not dry_run:
+                    if not no_documents:
                         serializer(name, doc)
                     progress.update()
     return serializer.artifacts, dict(files)
