@@ -345,12 +345,13 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                         target_drectory, root, unique_id, files, strict=args.strict
                     )
                     copying_failures.extend(copying_failures_)
-                    # Record the root relative to the pack directory.
+                    # The root_map value will be the relative path to
+                    # the data within the pack directory.
                     relative_root = new_root.relative_to(args.directory)
                     if not args.no_documents:
                         # When we are exporting documents, we rewrite the
-                        # Resource to ensure no collisions of roots in
-                        # root_map.
+                        # 'root' key in the Resource to unique_id to ensure
+                        # no collisions of the keys in root_map.
                         root_map.update({unique_id: relative_root})
                     else:
                         # If we are not exporting documents, the root_map has
@@ -365,10 +366,12 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                     (root_in_document, root, unique_id),
                     files,
                 ) in external_files.items():
+                    # The root_map value will be the current absolute path to
+                    # the data.
                     if not args.no_documents:
                         # When we are exporting documents, we rewrite the
-                        # Resource to ensure no collisions of roots in
-                        # root_map.
+                        # 'root' key in the Resource to unique_id to ensure
+                        # no collisions of the keys in root_map.
                         root_map.update({unique_id: root})
                     else:
                         # If we are not exporting documents, the root_map has
