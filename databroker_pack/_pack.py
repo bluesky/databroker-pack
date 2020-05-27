@@ -39,9 +39,10 @@ def export_uids(
     *,
     strict=False,
     external=None,
-    dry_run=False,
+    no_documents=False,
     handler_registry=None,
     serializer_class=None,
+    salt=None,
 ):
     """
     Export Runs from a Catalog, given a list of RunStart unique IDs.
@@ -61,7 +62,7 @@ def export_uids(
         If None, return the paths to external files.
         If 'fill', fill the external data into the Documents.
         If 'ignore', do not locate external files.
-    dry_run: Bool, optional
+    no_documents: Bool, optional
         If True, do not write any files. False by default.
     handler_registry: Union[Dict, None]
         If None, automatic handler discovery is used.
@@ -71,6 +72,16 @@ def export_uids(
         currently ``suitcase.msgpack.Serializer``, but this may change in the
         future. If you want ``suitcase.msgpack.Serializer`` specifically, pass
         it in explicitly.
+    salt: Union[bytes, None]
+        We want to make hashes is unique to:
+
+        - a root
+        - a given batch of exported runs (i.e., a given call to this function)
+
+        so that we can use it as a key in root_map which is guaranteed not to
+        collide with keys from other batches. Thus, we create a "salt" unless
+        one is specified here. This does not need to be cryptographically
+        secure, just unique.
 
     Returns
     -------
@@ -82,20 +93,15 @@ def export_uids(
       this case) to a list of buffers or filepaths where the documents were
       serialized.
     * ``files`` is the set of filepaths of all external files referenced by
-      Resource documents, keyed on ``(root, unique_id)``.
+      Resource documents, keyed on ``(root_in_document, root, unique_id)``.
     * ``failures`` is a list of uids of runs that raised Exceptions. (The
       relevant tracebacks are logged.)
     """
     accumulated_files = collections.defaultdict(set)
     accumulated_artifacts = collections.defaultdict(set)
     failures = []
-    # We want a hash that is unique to:
-    # - a root
-    # - a given batch of exported runs (i.e. a given call to this function)
-    # so that we can use it as a key in root_map which is guaranteed not to
-    # collide with keys from other batches. Thus, we create a "salt" here.
-    # This does not need to be cryptographically secure, just unique.
-    salt = secrets.token_hex(32).encode()
+    if salt is None:
+        salt = secrets.token_hex(32).encode()
     root_hash_func = functools.partial(root_hash, salt)
     with tqdm(total=len(uids), position=1, desc="Writing Documents") as progress:
         for uid in uids:
@@ -106,7 +112,7 @@ def export_uids(
                     directory,
                     root_hash_func,
                     external=external,
-                    dry_run=dry_run,
+                    no_documents=no_documents,
                     handler_registry=handler_registry,
                     root_map=source_catalog.root_map,
                     serializer_class=serializer_class,
@@ -134,9 +140,10 @@ def export_catalog(
     *,
     strict=False,
     external=None,
-    dry_run=False,
+    no_documents=False,
     handler_registry=None,
     serializer_class=None,
+    salt=None,
     limit=None,
 ):
     """
@@ -155,8 +162,8 @@ def export_catalog(
         If None, return the paths to external files.
         If 'fill', fill the external data into the Documents.
         If 'ignore', do not locate external files.
-    dry_run: Bool, optional
-        If True, do not write any files. False by default.
+    no_documents: Bool, optional
+        If True, do not serialize documents. False by default.
     handler_registry: Union[Dict, None]
         If None, automatic handler discovery is used.
     serializer_class: Serializer
@@ -165,6 +172,16 @@ def export_catalog(
         currently ``suitcase.msgpack.Serializer``, but this may change in the
         future. If you want ``suitcase.msgpack.Serializer`` specifically, pass
         it in explicitly.
+    salt: Union[bytes, None]
+        We want to make hashes is unique to:
+
+        - a root
+        - a given batch of exported runs (i.e., a given call to this function)
+
+        so that we can use it as a key in root_map which is guaranteed not to
+        collide with keys from other batches. Thus, we create a "salt" unless
+        one is specified here. This does not need to be cryptographically
+        secure, just unique.
     limit: Union[Integer, None]
         Stop after exporting some number of Runs. Useful for testing a subset
         before doing a lengthy export.
@@ -179,7 +196,7 @@ def export_catalog(
       this case) to a list of buffers or filepaths where the documents were
       serialized.
     * ``files`` is the set of filepaths of all external files referenced by
-      Resource documents, keyed on ``(root, unique_id)``.
+      Resource documents, keyed on ``(root_in_document, root, unique_id)``.
     * ``failures`` is a list of uids of runs that raised Exceptions. (The
       relevant tracebacks are logged.)
     """
@@ -190,13 +207,8 @@ def export_catalog(
     accumulated_files = collections.defaultdict(set)
     accumulated_artifacts = collections.defaultdict(set)
     failures = []
-    # We want a hash that is unique to:
-    # - a root
-    # - a given batch of exported runs (i.e. a given call to this function)
-    # so that we can use it as a key in root_map which is guaranteed not to
-    # collide with keys from other batches. Thus, we create a "salt" here.
-    # This does not need to be cryptographically secure, just unique.
-    salt = secrets.token_hex(32).encode()
+    if salt is None:
+        salt = secrets.token_hex(32).encode()
     root_hash_func = functools.partial(root_hash, salt)
     with tqdm(
         total=limit or len(source_catalog), position=1, desc="Writing Documents"
@@ -210,7 +222,7 @@ def export_catalog(
                     directory,
                     root_hash_func,
                     external=external,
-                    dry_run=dry_run,
+                    no_documents=no_documents,
                     handler_registry=handler_registry,
                     root_map=source_catalog.root_map,
                     serializer_class=serializer_class,
@@ -237,7 +249,7 @@ def export_run(
     root_hash_func,
     *,
     external=None,
-    dry_run=False,
+    no_documents=False,
     handler_registry=None,
     root_map=None,
     serializer_class=None,
@@ -255,8 +267,8 @@ def export_run(
         If None, return the paths to external files.
         If 'fill', fill the external data into the Documents.
         If 'ignore', do not locate external files.
-    dry_run: Bool, optional
-        If True, do not write any files. False by default.
+    no_documents: Bool, optional
+        If True, do not serialize documents. False by default.
     handler_registry: Union[Dict, None]
         If None, automatic handler discovery is used.
     serializer_class: Serializer, optional
@@ -276,7 +288,7 @@ def export_run(
       this case) to a list of buffers or filepaths where the documents were
       serialized.
     * ``files`` is the set of filepaths of all external files referenced by
-      Resource documents, keyed on ``(root, unique_id)``.
+      Resource documents, keyed on ``(root_in_document, root, unique_id)``.
     """
     EXTERNAL_RELATED_DOCS = ("resource", "datum", "datum_page")
     if serializer_class is None:
@@ -306,16 +318,30 @@ def export_run(
                         root = root_map.get(doc["root"], doc["root"])
                         unique_id = root_hash_func(doc["root"])
                         if external is None:
-                            resource = doc.copy()
-                            resource["root"] = root
-                            files[(root, unique_id)].update(run.get_file_list(resource))
-                        # Replace root with a unique ID before serialization.
-                        # We are overriding the local variable name doc here
-                        # (yuck!) so that serializer(name, doc) below works on
-                        # all document types.
-                        doc = doc.copy()
-                        doc["root"] = unique_id
-                    if not dry_run:
+                            if no_documents:
+                                root_in_document = doc["root"]
+                            else:
+                                root_in_document = root
+                            # - root_in_document is the 'root' actually in the
+                            # resource_document
+                            # - root may be different depending on the
+                            # source_catalog configuration, which can map the
+                            # recorded 'root' in the document to some other
+                            # location. This is where we should go looking for
+                            # the data if we plan to copy it.
+                            # - unique_id is unique to this (root, salt)
+                            # combination and used to place the data in a
+                            # unique location.
+                            key = (root_in_document, root, unique_id)
+                            files[key].update(run.get_file_list(doc))
+                        if not no_documents:
+                            # Replace root with a unique ID before serialization.
+                            # We are overriding the local variable name doc here
+                            # (yuck!) so that serializer(name, doc) below works on
+                            # all document types.
+                            doc = doc.copy()
+                            doc["root"] = unique_id
+                    if not no_documents:
                         serializer(name, doc)
                     progress.update()
     return serializer.artifacts, dict(files)
