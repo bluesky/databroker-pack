@@ -319,7 +319,7 @@ def export_run(
                         unique_id = root_hash_func(doc["root"])
                         if external is None:
                             if dry_run:
-                                root_in_document = resource["root"]
+                                root_in_document = doc["root"]
                             else:
                                 root_in_document = root
                             # - root_in_document is the 'root' actually in the
@@ -333,7 +333,7 @@ def export_run(
                             # combination and used to place the data in a
                             # unique location.
                             key = (root_in_document, root, unique_id)
-                            files[key].update(run.get_file_list(resource))
+                            files[key].update(run.get_file_list(doc))
                         if not dry_run:
                             # Replace root with a unique ID before serialization.
                             # We are overriding the local variable name doc here

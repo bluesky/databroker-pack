@@ -134,7 +134,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         action="store_true",
         help=(
             "By default, the locations of all relevant external files on the "
-            f"source machine are written to text files. "
+            "source machine are written to text files. "
             "Set this to omit those manifests."
         ),
     )
@@ -180,9 +180,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
     other_group.add_argument(
         "--salt",
         type=str.encode,  # casts input to bytes
-        help=(
-            "Set this to override the random default with a fixed value."
-        ),
+        help=("Set this to override the random default with a fixed value."),
     )
     other_group.add_argument(
         "-V",
@@ -339,7 +337,10 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             # reference its location.
             if args.copy_external:
                 target_drectory = pathlib.Path(args.directory, "external_files")
-                for (root_in_document, root, unique_id), files in external_files.items():
+                for (
+                    (root_in_document, root, unique_id),
+                    files,
+                ) in external_files.items():
                     new_root, new_files, copying_failures_ = copy_external_files(
                         target_drectory, root, unique_id, files, strict=args.strict
                     )
@@ -360,7 +361,10 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                     ]
                     write_external_files_manifest(manager, unique_id, rel_paths)
             else:
-                for (root_in_document, root, unique_id), files in external_files.items():
+                for (
+                    (root_in_document, root, unique_id),
+                    files,
+                ) in external_files.items():
                     if not args.no_documents:
                         # When we are exporting documents, we rewrite the
                         # Resource to ensure no collisions of roots in
