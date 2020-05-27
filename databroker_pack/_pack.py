@@ -163,7 +163,7 @@ def export_catalog(
         If 'fill', fill the external data into the Documents.
         If 'ignore', do not locate external files.
     no_documents: Bool, optional
-        If True, do not write any files. False by default.
+        If True, do not serialize documents. False by default.
     handler_registry: Union[Dict, None]
         If None, automatic handler discovery is used.
     serializer_class: Serializer
@@ -268,7 +268,7 @@ def export_run(
         If 'fill', fill the external data into the Documents.
         If 'ignore', do not locate external files.
     no_documents: Bool, optional
-        If True, do not write any files. False by default.
+        If True, do not serialize documents. False by default.
     handler_registry: Union[Dict, None]
         If None, automatic handler discovery is used.
     serializer_class: Serializer, optional
