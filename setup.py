@@ -46,7 +46,7 @@ setup(
     long_description=readme,
     author="Bluesky Collaboration",
     author_email="dama@bnl.gov",
-    url="https://github.com//databroker-pack",
+    url="https://github.com/bluesky/databroker-pack",
     python_requires=">={}".format(".".join(str(n) for n in min_version)),
     packages=find_packages(exclude=["docs", "tests"]),
     entry_points={
