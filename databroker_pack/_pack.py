@@ -214,7 +214,6 @@ def export_catalog(
     accumulated_files = collections.defaultdict(set)
     file_uids = collections.defaultdict(list)
     accumulated_artifacts = collections.defaultdict(set)
-    file_uid = {}
     failures = []
     if salt is None:
         salt = secrets.token_hex(32).encode()
