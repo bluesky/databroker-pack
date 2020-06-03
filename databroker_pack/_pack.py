@@ -99,7 +99,7 @@ def export_uids(
     * ``file_uids`` is a dictionary of filenames mapped to a list of RunStart unique IDs.
     """
     accumulated_files = collections.defaultdict(set)
-    file_uids = collection.defaultdict(list)
+    file_uids = collections.defaultdict(list)
     accumulated_artifacts = collections.defaultdict(set)
     failures = []
     if salt is None:
@@ -210,7 +210,7 @@ def export_catalog(
             raise ValueError("limit must be None or a number 1 or greater")
         limit = int(limit)
     accumulated_files = collections.defaultdict(set)
-    file_uids = collection.defaultdict(list)
+    file_uids = collections.defaultdict(list)
     accumulated_artifacts = collections.defaultdict(set)
     file_uid = {}
     failures = []
