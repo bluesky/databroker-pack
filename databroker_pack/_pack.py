@@ -96,6 +96,7 @@ def export_uids(
       Resource documents, keyed on ``(root_in_document, root, unique_id)``.
     * ``failures`` is a list of uids of runs that raised Exceptions. (The
       relevant tracebacks are logged.)
+    * ``file_uids`` is a dictionary of filenames mapped to a list of RunStart unique IDs.
     """
     accumulated_files = collections.defaultdict(set)
     file_uids = collection.defaultdict(list)
@@ -202,6 +203,7 @@ def export_catalog(
       Resource documents, keyed on ``(root_in_document, root, unique_id)``.
     * ``failures`` is a list of uids of runs that raised Exceptions. (The
       relevant tracebacks are logged.)
+    * ``file_uids`` is a dictionary of filenames mapped to a list of RunStart unique IDs.
     """
     if limit is not None:
         if limit < 1:
