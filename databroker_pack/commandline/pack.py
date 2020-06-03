@@ -287,7 +287,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             if not results:
                 print(f"Query {combined_query} yielded no results. Exiting.")
                 sys.exit(1)
-            artifacts, external_files, failures = export_catalog(
+            artifacts, external_files, failures, file_uids = export_catalog(
                 results,
                 manager,
                 strict=args.strict,
@@ -310,7 +310,7 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             if not uids:
                 print("Found empty input for --uids. Exiting")
                 sys.exit(1)
-            artifacts, external_files, failures = export_uids(
+            artifacts, external_files, failures, file_uids = export_uids(
                 catalog,
                 uids[:args.limit],
                 manager,
