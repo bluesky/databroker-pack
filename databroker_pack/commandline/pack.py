@@ -402,4 +402,4 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
 
 
 if __name__ == "__main__":
-   main()
+    main()
