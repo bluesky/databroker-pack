@@ -96,8 +96,11 @@ def export_uids(
       Resource documents, keyed on ``(root_in_document, root, unique_id)``.
     * ``failures`` is a list of uids of runs that raised Exceptions. (The
       relevant tracebacks are logged.)
+    * ``file_uids`` is a dictionary of RunStart unique IDs mapped to
+      ``(root, filename)``.
     """
     accumulated_files = collections.defaultdict(set)
+    file_uids = {}
     accumulated_artifacts = collections.defaultdict(set)
     failures = []
     if salt is None:
@@ -117,8 +120,10 @@ def export_uids(
                     root_map=source_catalog.root_map,
                     serializer_class=serializer_class,
                 )
+                file_uids[uid] = []
                 for root, set_ in files.items():
                     accumulated_files[root].update(set_)
+                    file_uids[uid].extend((root, filename) for filename in set_)
                 for name, list_ in artifacts.items():
                     accumulated_artifacts[name].update(list_)
 
@@ -131,7 +136,7 @@ def export_uids(
                     f"Writing Documents ({len(failures)} failures)", refresh=False
                 )
             progress.update()
-    return dict(accumulated_artifacts), dict(accumulated_files), failures
+    return dict(accumulated_artifacts), dict(accumulated_files), failures, file_uids
 
 
 def export_catalog(
@@ -199,12 +204,15 @@ def export_catalog(
       Resource documents, keyed on ``(root_in_document, root, unique_id)``.
     * ``failures`` is a list of uids of runs that raised Exceptions. (The
       relevant tracebacks are logged.)
+    * ``file_uids`` is a dictionary of RunStart unique IDs mapped to
+      ``(root, filename)``.
     """
     if limit is not None:
         if limit < 1:
             raise ValueError("limit must be None or a number 1 or greater")
         limit = int(limit)
     accumulated_files = collections.defaultdict(set)
+    file_uids = {}
     accumulated_artifacts = collections.defaultdict(set)
     failures = []
     if salt is None:
@@ -227,8 +235,10 @@ def export_catalog(
                     root_map=source_catalog.root_map,
                     serializer_class=serializer_class,
                 )
+                file_uids[uid] = []
                 for root, set_ in files.items():
                     accumulated_files[root].update(set_)
+                    file_uids[uid].extend((root, filename) for filename in set_)
                 for name, list_ in artifacts.items():
                     accumulated_artifacts[name].update(list_)
             except Exception:
@@ -240,7 +250,7 @@ def export_catalog(
                     f"Writing Documents ({len(failures)} failures)", refresh=False
                 )
             progress.update()
-    return dict(accumulated_artifacts), dict(accumulated_files), failures
+    return dict(accumulated_artifacts), dict(accumulated_files), failures, file_uids
 
 
 def export_run(
