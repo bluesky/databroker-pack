@@ -1,4 +1,4 @@
-databroker >=1.0.1
+databroker >=1.0.5
 event-model
 intake >=0.5.5
 suitcase-jsonl
