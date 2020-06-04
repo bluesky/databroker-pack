@@ -120,9 +120,10 @@ def export_uids(
                     root_map=source_catalog.root_map,
                     serializer_class=serializer_class,
                 )
+                file_uids[uid] = []
                 for root, set_ in files.items():
                     accumulated_files[root].update(set_)
-                    file_uids[uid] = [(root, filename) for filename in set_]
+                    file_uids[uid].extend([(root, filename) for filename in set_])
                 for name, list_ in artifacts.items():
                     accumulated_artifacts[name].update(list_)
 
@@ -234,9 +235,10 @@ def export_catalog(
                     root_map=source_catalog.root_map,
                     serializer_class=serializer_class,
                 )
+                file_uids[uid] = []
                 for root, set_ in files.items():
                     accumulated_files[root].update(set_)
-                    file_uids[uid] = [(root, filename) for filename in set_]
+                    file_uids[uid].extend([(root, filename) for filename in set_])
                 for name, list_ in artifacts.items():
                     accumulated_artifacts[name].update(list_)
             except Exception:
