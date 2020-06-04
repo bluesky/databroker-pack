@@ -238,7 +238,7 @@ def export_catalog(
                 file_uids[uid] = []
                 for root, set_ in files.items():
                     accumulated_files[root].update(set_)
-                    file_uids[uid].extend([(root, filename) for filename in set_])
+                    file_uids[uid].extend((root, filename) for filename in set_)
                 for name, list_ in artifacts.items():
                     accumulated_artifacts[name].update(list_)
             except Exception:
