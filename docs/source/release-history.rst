@@ -5,6 +5,9 @@ Release History
 v0.3.0 (2020-06-05)
 -------------------
 
+Changed
++++++++
+
 * In the Python API, the :func:`databroker_pack.export_catalog` and
   :func:`databroker_pack.export_uids` return an additional item: a mapping of
   Run uids to the list of files associated with them.
