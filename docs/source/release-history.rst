@@ -11,7 +11,7 @@ Changed
 * In the Python API, the :func:`databroker_pack.export_catalog` and
   :func:`databroker_pack.export_uids` return an additional item: a mapping of
   Run uids to the set of files associated with them---specifically, the
-  ``(root, filepath)`` paris.
+  ``(root, filepath)`` pairs.
 
 v0.2.0 (2020-06-01)
 -------------------
