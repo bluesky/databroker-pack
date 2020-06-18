@@ -286,6 +286,11 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
                 results = catalog.search(combined_query)
             if not results:
                 print(f"Query {combined_query} yielded no results. Exiting.")
+                # This can be a result of bash mangling the query beacuse the
+                # caller forgot to escape the $'s.
+                print(
+                    "If your query had dollar signs in it, remember to "
+                    "escape them like \\$.")
                 sys.exit(1)
             artifacts, external_files, failures, file_uids = export_catalog(
                 results,
