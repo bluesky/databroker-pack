@@ -85,7 +85,7 @@ def export_uids(
 
     Returns
     -------
-    artifacts, files, failures
+    artifacts, files, failures, file_uids
 
     Notes
     -----
@@ -193,7 +193,7 @@ def export_catalog(
 
     Returns
     -------
-    artifacts, files, failures
+    artifacts, files, failures, file_uids
 
     Notes
     -----
