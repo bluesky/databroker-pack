@@ -106,7 +106,7 @@ def export_uids(
     if salt is None:
         salt = secrets.token_hex(32).encode()
     root_hash_func = functools.partial(root_hash, salt)
-    with tqdm(total=len(uids), position=1, desc="Writing Documents") as progress:
+    with tqdm(total=len(uids), position=1, desc="Writing Documents", unit="runs") as progress:
         for uid in uids:
             try:
                 run = source_catalog[uid]
@@ -219,7 +219,7 @@ def export_catalog(
         salt = secrets.token_hex(32).encode()
     root_hash_func = functools.partial(root_hash, salt)
     with tqdm(
-        total=limit or len(source_catalog), position=1, desc="Writing Documents"
+        total=limit or len(source_catalog), position=1, unit="runs", desc="Writing Documents"
     ) as progress:
         for i, (uid, run) in enumerate(source_catalog.items()):
             if i == limit:
@@ -315,7 +315,7 @@ def export_run(
         with serializer_class(
             directory, file_prefix="documents/{start[uid]}"
         ) as serializer:
-            with tqdm(position=0) as progress:
+            with tqdm(position=0, unit="documents") as progress:
                 for name, doc in run.canonical(fill="no"):
                     if external == "fill":
                         name, doc = filler(name, doc)
