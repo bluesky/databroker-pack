@@ -52,4 +52,6 @@ def test_pack_smoke(cli_args, simple_catalog, tmpdir):
     "Smoke test common options."
     TIMEOUT = 10
     CATALOG = simple_catalog
-    pack([CATALOG, tmpdir, *cli_args])
+    args = [CATALOG, tmpdir.dirname, *cli_args]
+    print("ARGS", args)
+    pack(args)
