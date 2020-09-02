@@ -189,8 +189,10 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         help="Show databroker_pack version and exit.",
     )
     if args is None:
+        breakpoint()
         args = parser.parse_args()
     else:
+        breakpoint()
         args = parser.parse_args(args)
 
     # We hide the imports here just for speed.
