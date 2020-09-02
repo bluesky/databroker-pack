@@ -23,8 +23,7 @@ from .._pack import (
 
 print = functools.partial(print, file=sys.stderr)
 
-
-def main():
+def main(args=None):
     with tempfile.NamedTemporaryFile("w", delete=False) as file:
         error_logfile_name = file.name
     error_handler = logging.FileHandler(error_logfile_name)
@@ -189,7 +188,11 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
         default=argparse.SUPPRESS,
         help="Show databroker_pack version and exit.",
     )
-    args = parser.parse_args()
+    if args is None:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(args)
+
     # We hide the imports here just for speed.
     if args.format == "msgpack":
         import suitcase.msgpack
@@ -404,6 +407,9 @@ $ databroker-pack CATALOG --all --copy-external DIRECTORY
             sys.exit(1)
     finally:
         manager.close()
+
+
+pack = main
 
 
 if __name__ == "__main__":
