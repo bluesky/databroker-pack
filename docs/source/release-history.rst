@@ -2,6 +2,21 @@
 Release History
 ===============
 
+v0.3.1 (2021-10-12)
+-------------------
+
+Added
++++++
+
+* tqdm progress bar units.
+* print reminder to escape dollar sign character.
+
+Fixed
++++++
+
+* `export_uids` doc string return value.
+
+
 v0.3.0 (2020-06-05)
 -------------------
 
