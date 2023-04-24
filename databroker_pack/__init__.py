@@ -5,3 +5,4 @@ del get_versions
 
 from ._pack import *  # noqa
 from ._unpack import *  # noqa
+from .commandline.pack import pack

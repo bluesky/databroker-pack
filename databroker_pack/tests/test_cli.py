@@ -81,6 +81,7 @@ def test_pack_smoke(cli_args, simple_catalog, tmpdir, relative_target_directory)
         )
     # Capture stdout, stderr for interactive debugging.
     stdout, stderr = p.communicate(TIMEOUT)
+    breakpoint()
     assert p.returncode == 0
 
 
